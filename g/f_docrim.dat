@@ -1,0 +1,13 @@
+	global $game, $time_crim;
+	if (isset($game["players"][$login])) {					// монстрам надпись крим не делаем
+		$tmn=0;
+		if (isset($game["loc"][$game["players"][$login]][$login]["time_crim"]) && $game["loc"][$game["players"][$login]][$login]["crim"]=="1") $tmn=$game["loc"][$game["players"][$login]][$login]["time_crim"]-time();
+
+		$game["loc"][$game["players"][$login]][$login]["crim"]="1";
+		if ($tmn<0) $tmn=0;
+		$skills=split("\|",$game["loc"][$game["players"][$login]][$login]["skills"]);
+		$time_crim=$time_crim-round($time_crim/100*(5*$skills[25]));
+		$game["loc"][$game["players"][$login]][$login]["time_crim"] = time()+$time_crim+$tmn;
+		$tmn=$game["loc"][$game["players"][$login]][$login]["time_crim"]-time();		
+		if ($tmn>(59*60)) $game["loc"][$game["players"][$login]][$login]["time_crim"]=time()+59*60;
+		}

@@ -1,0 +1,23 @@
+// проверим, если такой выход в локации с игроком
+$old=split("\|",$locations[$player["loc"]]);
+if (isset($locations[$go]) && array_search($go,$old)) {
+//	if ( $player["t_go"]>time() ) msg("Вам необходимо отдохнуть ".($player["t_go"]-time())." сек.");
+//	$player["t_go"] = time()+3;
+
+//
+	$new=split("\|",$locations[$go]);
+	if (!$old[1] && $new[1]) addjournal($login,"Вы на охраняемой территории");
+	if ($old[1] && !$new[1]) addjournal($login,"Вы покинули охраняемую территорию");
+	if ($info[2]=='f') {addjournalall($player["loc"],$player["title"]." ушла ".$old[array_search($go,$old)-1],$login);} else {addjournalall($player["loc"],$player["title"]." ушел ".$old[array_search($go,$old)-1],$login);}
+	$game["loc"][$go][$login]=$game["loc"][$player["loc"]][$login];
+	unset($game["loc"][$player["loc"]][$login]);
+	unset($player);
+	$player=&$game["loc"][$go][$login];
+	unset($player["attack"]);
+	$game["players"][$login]=$go;
+	$player["loc"]=$go;
+	if ($info[2]=='f') {addjournalall($go,"Пришла ".$player["title"],$login);}
+	else {addjournalall($go,"Пришел ".$player["title"],$login);}
+	if (isset($player["pd"])) { $pd=split("\|",$player["pd"]); $page_desc = $pd[0];} else $page_desc ="1";// вывести описание локации
+	if (strpos($go,"oc.k.") || strpos($go,"oc.L.")) $page_desc ="0";
+}

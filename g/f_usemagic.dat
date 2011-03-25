@@ -1,0 +1,258 @@
+// кастинг заклинаний
+
+		eval(implode('',file("f_magic.dat")));	// загружаем всю магию
+		$magic=split("\|",$arr_magic[$use]);
+
+		// проверяем, нужна ли цель
+		if (($magic[6] && $to) || !$magic[6]) {
+
+			// проверяем, хватает ли маны
+			if ($player["mana"]>=$magic[1]) {
+			$regsok=1;
+			if (!$scroll) {		// проверяем и удаляем реги
+				if (!isset($player["magic"][$use])) msg("<p>У вас нет такого заклинания!");
+				$st="";
+				for ($i=9;$i<count($magic);$i++) {
+					$reg=split(":",$magic[$i]);
+					if (!isset($player["items"][$reg[0]])) {$regsok=0; $st.="<br/>".$reg[2];}
+						else {$item=split("\|",$player["items"][$reg[0]]); if ($item[1]<$reg[1]) {$regsok=0; if ($st) $st.=", ".$reg[2]; else $st=$reg[2];}}
+					}
+				}
+			if ($regsok) {			// мана и реги ок, кастуем
+				$skills=split("\|",$player["skills"]);
+				// вероятность кастинга
+				$cast=10*(($skills[13]+1)*2-$magic[2]);
+				if ($cast>0) {		// пытаемся колдовать
+				// уменьшаем ману
+				$player["mana"]-=$magic[1];
+				// если требовались реги, удаляем их
+				if (!$scroll) for ($i=9;$i<count($magic);$i++) {
+					$reg=split(":",$magic[$i]);
+					$item=split("\|",$player["items"][$reg[0]]);
+					$item[1]-=1;
+					if ($item[1]<1) unset($player["items"][$reg[0]]); else $player["items"][$reg[0]]=implode("|",$item); 
+					}
+				// если кастовали со скролла, удаляем его
+				if ($scroll && substr($scroll,0,12)=='item.scroll.') {
+					$item=split("\|",$player["items"][$scroll]);
+					$item[1]-=1;
+					if ($item[1]<1) unset($player["items"][$scroll]); else $player["items"][$scroll]=implode("|",$item); 
+					addjournal($login,"Вы потеряли 1 ".$item[0]);
+					}
+				// произносим заклинание
+				addjournalall($player["loc"],$player["title"].": ".$magic[3]);
+				if (rand(0,100)<=$cast) {		// удалось!
+					// перебираем каждое заклинание и эффект от него
+
+					if (substr($use,0,10)=='magic.vamp') {	// вампир
+						if (isset($game["loc"][$player["loc"]][$to]) && (substr($to,0,4)=='npc.' || substr($to,0,5)=='user.')) {
+							$heal=rand($magic[4],$magic[5]);
+							$toheal=$game["loc"][$player["loc"]][$to]["life"];
+							//if ($toheal<2) $heal=0;
+							if (($toheal-$heal)<1) 
+							 $game["loc"][$player["loc"]][$to]["life"]=1;
+							else
+							 $game["loc"][$player["loc"]][$to]["life"]-=$heal;
+
+							$heal=$toheal-$game["loc"][$player["loc"]][$to]["life"];
+							if ($game["loc"][$player["loc"]][$login]["life"]+$heal>$game["loc"][$player["loc"]][$login]["life_max"]) 
+							 $game["loc"][$player["loc"]][$login]["life"]=$game["loc"][$player["loc"]][$login]["life_max"];
+							else
+							 $game["loc"][$player["loc"]][$login]["life"]+=$heal;
+							
+							addjournal($to,"Жизнь -".$heal);
+							addjournal($login,"Жизнь +".$heal);
+							// если не крима, сами станомся кримом
+							$crim=$game["loc"][$player["loc"]][$to]["crim"] || substr($to,0,9)=='npc.crim.';
+							if (!$crim) docrim($login);
+							}else addjournal($login,"Нет цели");
+						}
+
+
+					if ($use=='magic.mark') {	// Пометить
+						if (isset($player["items"][$to]) && substr($to,0,15)=='item.recallrune') {
+							$id="item.recallrune.".$player["loc"];
+							$loc=split("\|",$locations[$player["loc"]]);
+							// удаляем пустую руну
+							$item=split("\|",$player["items"][$to]);
+							$item[1]-=1;
+							if ($item[1]<1) unset($player["items"][$to]); else $player["items"][$to]=implode("|",$item); 
+							// добавляем новую руну
+							if (isset($player["items"][$id])) $item=split("\|",$player["items"][$id]); else $item=split("\|","руна ".$loc[0]."|0|100");
+							$item[1]+=1;
+							$player["items"][$id]=implode("|",$item); 
+							addjournal($login,"Руна помечена как ".$loc[0]);
+							} else addjournal($login,"Заклинание можно использовать только на руну телепортации");
+						}
+
+					if ($use=='magic.recall') {	// Возвращение
+						if (isset($player["items"][$to]) && substr($to,0,15)=='item.recallrune') {
+							if (substr($to,0,21)!='item.recallrune.empty') {
+/*modif*/								$go=substr($to,16,strlen($to)-16);
+								        if (strpos($go,".castle.")) msg("Руна испорчена");
+								$old=split("\|",$locations[$player["loc"]]);
+								if (isset($locations[$go]) && $player["loc"]!=$go) {
+									$new=split("\|",$locations[$go]);
+									if (!$old[1] && $new[1]) addjournal($login,"Вы на охраняемой территории");
+									if ($old[1] && !$new[1]) addjournal($login,"Вы покинули охраняемую территорию");
+									addjournalall($player["loc"],$player["title"]." улетел ",$login);
+									$game["loc"][$go][$login]=$game["loc"][$player["loc"]][$login];
+									unset($game["loc"][$player["loc"]][$login]);
+									unset($player);
+									$player=&$game["loc"][$go][$login];
+									unset($player["attack"]);
+									$game["players"][$login]=$go;
+									$player["loc"]=$go;
+									addjournalall($go,"Прилетел ".$player["title"],$login);
+									$page_desc = "1";	// вывести описание локации
+									}
+								} else addjournal($login,"Руна не помечена ни в одно место");
+							} else addjournal($login,"Заклинание можно использовать только на руну телепортации");
+						}
+            if ($use=='magic.port') {
+            if (isset($player["items"][$to]) && substr($to,0,15)=='item.recallrune') {
+            if (substr($to,0,21)!='item.recallrune.empty') {
+            $go=substr($to,16,strlen($to)-16);
+            // echo $go;
+            $l=explode("|", $locations[$go]);
+            // print_r($l);
+             $game["loc"][$player["loc"]]['item.port'.time()]="Телепорт в ".$l[0]."|".$login."|".$go;
+             $game["loc_del"][$player["loc"]]['item.port'.time()]=time()+$time_objects_destroy;
+               } else addjournal($login,"Руна не помечена ни в одно место");
+              } else addjournal($login,"Заклинание можно использовать только на руну телепортации");
+            }
+					if ($use=='magic.createfood') {	// создать еду
+						$rnd=rand(0,100);
+						if ($rnd<=20) {$id="item.food.apple"; $item="яблоко|1|4|2|0|";}
+						if ($rnd>20 && $rnd<=35) {$id="item.food.cabbage"; $item="капуста|1|10|1|0|";}
+						if ($rnd>35 && $rnd<=55) {$id="item.food.bread"; $item="хлеб|1|16|6|0|";}
+						if ($rnd>55 && $rnd<=75) {$id="item.food.sandwich"; $item="бутерброд|1|15|5|0|";}
+						if ($rnd>75 && $rnd<=85) {$id="item.food.mushroom"; $item="гриб|1|10|2|2|";}
+						if ($rnd>85 && $rnd<=100) {$id="item.food.sausage"; $item="колбаса|1|20|9|0|";}
+						// добавляем новый предмет в локацию
+						if (isset($game["loc"][$player["loc"]][$id])) $item=split("\|",$game["loc"][$player["loc"]][$id]); else $item=split("\|",$item);
+						$game["loc"][$player["loc"]][$id]=implode("|",$item);
+						addjournalall($player["loc"],"Появился 1 ".$item[0]);
+						}
+					if (substr($use,0,10)=='magic.heal') {	// лечить
+						if (isset($game["loc"][$player["loc"]][$to]) && (substr($to,0,4)=='npc.' || substr($to,0,5)=='user.')) {
+							$heal=rand($magic[4],$magic[5]);	// только не повреждает, а лечит
+							if ($game["loc"][$player["loc"]][$to]["life"]+$heal>$game["loc"][$player["loc"]][$to]["life_max"]) $heal=$game["loc"][$player["loc"]][$to]["life_max"]-$game["loc"][$player["loc"]][$to]["life"];
+							$game["loc"][$player["loc"]][$to]["life"]+=$heal;
+							addjournal($to,"Жизнь +".$heal);
+							// если лечим крима, сами станомся кримом
+							$crim=$game["loc"][$player["loc"]][$to]["crim"] || substr($to,0,9)=='npc.crim.';
+							if ($crim && $login!=$to) { $time_crim = 10*60; docrim($login); }
+							}else addjournal($login,"Некого лечить");
+						}
+
+					if ($use=='magic.ressurect') {	// воскресить
+						if (isset($game["loc"][$player["loc"]][$to]) && substr($to,0,5)=='user.' && $game["loc"][$player["loc"]][$to]["ghost"]) {
+							ressurect($to);
+							}else addjournal($login,"Воскресить можно только игрока");
+						}
+					if ($use=='magic.maddenes') {	// безумие
+						$keys = array_keys($game["loc"][$player["loc"]]);
+						$id = $keys[rand(0,count($keys)-1)];
+						if (substr($id,0,5)=='user.' || substr($id,0,4)=='npc.') {
+							$idto = $keys[rand(0,count($keys)-1)];
+							if ($id!=$idto && (substr($idto,0,5)=='user.' || substr($idto,0,4)=='npc.')) {
+								$game["loc"][$player["loc"]][$id]["attack"]=$idto;
+								attack($player["loc"],$id,$idto);
+								}else addjournal($login,"Безумие прошло, никого не тронув");
+							}else addjournal($login,"Безумие никого не тронуло");
+						}
+					if ($use=='magic.silence') {	// тишина
+						if ($game["loc"][$player["loc"]]) foreach(array_keys($game["loc"][$player["loc"]]) as $i) if (substr($i,0,4)=='npc.' && $game["loc"][$player["loc"]][$i]["attack"]) {unset($game["loc"][$player["loc"]][$i]["attack"]);}
+						}
+					if ($use=='magic.peace') {	// успокоить
+						if (isset($game["loc"][$player["loc"]][$to]) && substr($to,0,4)=='npc.')  unset($game["loc"][$player["loc"]][$to]["attack"]);
+							else addjournal($login,"Заклинание действует только на NPC");
+						}
+					if (substr($use,0,11)=='magic.charm') {	// зачаровать или привлечь
+						if (isset($game["loc"][$player["loc"]][$to])) {
+							$ok=0;
+							// зачаровать до 5 минут животных animal=1, сопровождают и охраняют
+							if ($use=='magic.charm' && substr($to,0,7)=='animal.') {$ok=1; $timemin=60; $timemax=5*60; $follow=1;} else addjournal($login,"Заклинание действует только на животных");
+							// привлечь на свою до 20 сек - 1 минута сторону любого (кроме гардов) атакующего, защищает, но не сопровождает
+							if ($use=='magic.charm.enemy' && substr($to,0,4)=='npc.' && !substr($to,0,9)=='npc.guard' && $game["loc"][$player["loc"]][$to]["attack"]) {$ok=1; $timemin=20; $timemax=1*60;  $follow=0;} else addjournal($login,"Заклинание действует только на дерущихся");
+							if ($ok) {unset($game["loc"][$player["loc"]][$to]["attack"]); $game["loc"][$player["loc"]][$to]["owner"]=$login; $game["loc"][$player["loc"]][$to]["time_owner"]=time()+rand($timemin,$timemax);if ($follow) $game["loc"][$player["loc"]][$to]["follow"]=$login;$game["loc"][$player["loc"]][$to]["guard"]==$login;}
+							} addjournal($login,"Нет цели");
+						}
+					if (substr($use,0,10)=='magic.all.') {	// на всех
+						// т.к. атакуем магией, то сэмулируем 'war'
+						// war=hit|damage_min|damage_max|speed|ranged|armor|uklon|parring|shield|magic_uklon|magic_parring|magic_shield|weaponby|exp|need|needtitle
+$m_war=split("\|",$player["war"]);						
+$war="100|".$magic[4]."|".$magic[5]."|".$magic[8]."|0|0|0|0|0|0|0|0|магией|".$m_war[13]."||";
+						if ($game["loc"][$player["loc"]]) foreach(array_keys($game["loc"][$player["loc"]]) as $i) if (substr($i,0,5)!='item.' && $i!=$login) if (!$magic[7] || ($magic[7] && ($game["loc"][$player["loc"]][$i]["crim"] || substr($i,0,9)=='npc.crim.'))) attack($player["loc"],$login,$i,$war);
+						// наносим и себе урон
+						if ($use=='magic.all.earthquake') attack($player["loc"],$login,$login,$war);
+						}
+					if (substr($use,0,10)=='magic.war.') {	// боевые на цель
+$m_war=split("\|",$player["war"]);						
+$war="100|".$magic[4]."|".$magic[5]."|".$magic[8]."|0|0|0|0|0|0|0|0|магией|".$m_war[13]."||";
+						if (isset($game["loc"][$player["loc"]][$to]) && substr($to,0,5)!='item.') {
+							if (!$magic[7] || ($magic[7] && ($game["loc"][$player["loc"]][$to]["crim"] || substr($to,0,9)=='npc.crim.'))) attack($player["loc"],$login,$to,$war);
+							} else addjournal($login," Заклинание действует только на существ");
+						}
+					if (substr($use,0,13)=='magic.summon.') {	// призывание
+						// проверим, чтобы в локации не было более 3 призванных существ, остальных отпустим
+						$counttmp=0;
+						if ($game["loc"][$player["loc"]]) foreach (array_keys($game["loc"][$player["loc"]]) as $i) if ($game["loc"][$player["loc"]][$i]["owner"]==$login) {$counttmp++; if ($counttmp>3) if ($game["loc"][$player["loc"]][$i]["destroyonfree"]) {addjournalall($player["loc"],$game["loc"][$player["loc"]][$i]["title"]." исчез"); addjournal($login,$game["loc"][$player["loc"]][$i]["title"]." покинул вас"); unset($game["loc"][$player["loc"]][$i]);} else {addjournal($login,$game["loc"][$player["loc"]][$i]["title"]." покинул вас"); unset($game["loc"][$player["loc"]][$i]["owner"]);unset($game["loc"][$player["loc"]][$i]["time_owner"]); unset($game["loc"][$player["loc"]][$i]["follow"]); unset($game["loc"][$player["loc"]][$i]["guard"]);}}
+						if ($use=='magic.summon.wolf') $item=array(
+	"title"=>"призванный волк",
+	"life"=>"20",
+	"life_max"=>"20",
+	"war"=>"70|4|11|5|0|0|5|0|0|0|0|0|зубами|0||",
+	"destroyonfree"=>"1",
+	);
+						if ($use=='magic.summon.skeleton') $item=array(
+	"title"=>"призванный скелет",
+	"life"=>"30",
+	"life_max"=>"30",
+	"war"=>"65|5|12|6|0|0|10|0|0|0|0|0||0||",
+	"destroyonfree"=>"1",
+	);
+						if ($use=='magic.summon.golem') $item=array(
+	"title"=>"призванный голем",
+	"life"=>"50",
+	"life_max"=>"50",
+	"war"=>"90|8|14|7|0|5|10|0|0|30|50|4||0||",
+	"destroyonfree"=>"1",
+	);
+	if ($use=='magic.summon.demon') $item=array(
+	"title"=>"призванный демон",
+	"life"=>"80",
+	"life_max"=>"80",
+	"war"=>"95|9|18|7|0|3|10|0|0|20|70|8||0||",
+	"destroyonfree"=>"1",
+	);
+	if ($use=='magic.summon.gigant') $item=array(
+	"title"=>"призванный гигант",
+	"life"=>"100",
+	"life_max"=>"100",
+	"war"=>"90|8|14|7|0|5|10|0|0|30|50|4||0||",
+	"destroyonfree"=>"1",
+	);
+	if ($use=='magic.summon.pes') $item=array(
+	"title"=>"призванный пёс",
+	"life"=>"60",
+	"life_max"=>"60",
+	"war"=>"90|10|16|7|0|5|10|0|0|30|50|4||0||",
+	"destroyonfree"=>"1",
+	);
+						$template="npc.".substr($use,13);
+						srand ((float) microtime() * 10000000);
+						$id=$template.rand(5,9999);
+						$game["loc"][$player["loc"]][$id] = $item;
+						$game["loc"][$player["loc"]][$id]["owner"] = $login;
+						$game["loc"][$player["loc"]][$id]["guard"] = $login;
+						if ($use!='magic.summon.demon') $game["loc"][$player["loc"]][$id]["follow"] = $login;	// демон за вами не следует :-))
+							else {$game["loc"][$player["loc"]][$id]["crim"]=1;docrim($login);} 	// демон crim и создавший его становится кримом. если не от кого защищать создавшего, то нападает на игроков, в том числе на создавшего :-)
+						$game["loc"][$player["loc"]][$id]["time_owner"]=time()+rand(1*60,10*60);	// до 10 минут
+						}
+					}else addjournal($login,"Заклинание сорвалось");
+				}else addjournal($login,"Слишком слабый навык магии");
+			}else addjournal($login,"Не хватает реагентов: ".$st);
+			}else addjournal($login,"Недостаточно маны");
+		} else {$list='all';}	// нужна цель для этого заклинания

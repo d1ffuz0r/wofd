@@ -1,0 +1,36 @@
+// список инвентори
+// в $to цель, если есть
+	$stmp="<p>";
+   $count = 0;
+   if ( isset($player["msg"]) && count($player["msg"]) ) foreach (array_keys($player["msg"]) as $i) if ( $player["msg"][$i] && isset($game["players"][$i]) ) $count++;
+   if ($count) $stmp.= "<a href=\"$PHP_SELF?sid=$sid&msg=1\">[ л/с: $count ]</a><br/>";
+	
+  if (!$to) {
+		$stmp.="<a href=\"$PHP_SELF?sid=$sid&look=$login\">[инфо]</a><br/><a href=\"$PHP_SELF?sid=$sid&list=magic\">[магия]</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&list=skill\">[навыки]</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&set=1\">[настройки]</a>";
+		$war=split("\|",$player["war"]);
+		$stmp.="\n<br/><b>Урон:</b> ".$war[1]."-".$war[2]." [".$war[0]."%]\n<br/><b>Броня:</b> ".($war[5]+$war[8]);
+		} else {
+			if ($macro==1) $m="&macros=list&num=$num&name=$name&act=$act#add"; else $m='';
+			$stmp.="Выберите предмет: ";
+			}
+	// FIX: тут надо сортировать предметы в таком порядке: оружие, руны, напитки, броня, еда, прочее
+	if (count($player["items"])==0) $stmp.="<br/>У вас нет ни одного предмета";
+	$ind=0; $count=0; if(!$start) $start=0;
+	foreach(array_keys($player["items"]) as $i) {
+		if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+		$k=split("\|",$player["items"][$i]);
+		if ($k[1]>1) $k=$k[0]." (".$k[1].")"; else $k=$k[0];
+		if ($player["equip"] && array_search($i,$player["equip"])) $k.=" [одето]";
+		if ($to) {
+			$stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&to=$to&use=".$i.$m."\">".$k."</a>";
+			} else {	// основное меню
+				$stmp.="\n<br/><anchor>".$k."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+				}
+		}
+		$ind++;
+		}
+	if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&list=inv\">^ </a>";}
+	if ($start+$count_show<=count($player["items"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&list=inv&start=".($start+$count_show)."\">+ (".(count($player["items"])-$start-$count_show).")</a>";}
+	// меню
+	$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<a href=\"$PHP_SELF?sid=$sid&use=$(to)\">[Использовать]</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&drop=$(to)\">[Бросить]</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=$login&look=$(to)\">[Инфо]</a>";
+	msg($stmp,"Предметы",1);

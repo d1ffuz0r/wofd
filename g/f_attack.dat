@@ -1,0 +1,12 @@
+
+if ($attack) {			//linkАтаковать
+	if ($player["ghost"]) msg("<p>Вы призрак и поэтому не можете никого атаковать, найдите лекаря или камень воскрешения");
+	if (isset($game["loc"][$player["loc"]][$attack])) {
+		if (substr($attack,0,4)=='npc.' || substr($attack,0,5)=='user.') {
+			// установим статус, что нападаем на такого-то
+			$player["attack"]=$attack;
+			if (time()<$player["time_speed"]) addjournal($login,"Слишком часто атакуете");
+				else attack($player["loc"],$login,$attack);
+			} else addjournal($login,"Нападать можно только на людей, NPC и монстров");
+		} else addjournal($login,"Не на кого напасть");
+	}

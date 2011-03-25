@@ -1,0 +1,40 @@
+					if (!$game["loc"][$player["loc"]][$speak]["bankir"]) msg("<p>Это не банкир");
+					if (!$to) {		// список
+						if (count($player["items"])==0) msg("<p>У вас нет ни одного предмета");
+						$stmp="<p>Предметы:";
+						$ind=0; $count=0; if(!$start) $start=0;
+						foreach(array_keys($player["items"]) as $i) {
+							if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+							$k=split("\|",$player["items"][$i]);
+							if ($k[1]>1) $k=$k[0]." (".$k[1].")"; else $k=$k[0];
+							if ($player["equip"] && array_search($i,$player["equip"])) $k.=" [одето]";
+							$stmp.="\n<br/><anchor>".$k."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+							}
+							$ind++;
+							}
+						if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id\">^ </a>";}
+						if ($start+$count_show<count($player["items"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&start=".($start+$count_show)."\">+ (".(count($player["items"])-$start-$count_show).")</a>";}
+						// меню
+						$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$(to)\">В банк</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=$login&look=$(to)\">Инфо</a>";
+						msg($stmp,"Положить в банк");
+						}else {	// передаем $to
+							if ( count($player["bank"])>50 ) msg("У вас слишком много предметов в банке, можно хранить не более 50 предметов.");
+							if (!isset($player["items"][$to])) {msg("<p>У вас нет этого предмета");} else {
+							$item=split("\|",$player["items"][$to]);
+							// проверим кол-во
+							$num=intval($num);
+							if ($item[1]>1 && !$num) {		// запросим кол-во
+								$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$to&num=$(num)\">ok</a><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$to&num=100000\">все</a>";
+								msg($stmp);
+								}
+							if (!$num || $num<1) $num=1;
+							if ($num>$item[1]) $num=$item[1];
+							// удаляем из игрока
+							$item[1]-=$num;
+							if ($item[1]<=0) {unset($player["items"][$to]);calcparam($login);} else $player["items"][$to]=implode("|",$item);
+							// добавляем игроку в банк
+							if (isset($player["bank"][$to])) $itemp=split("\|",$player["bank"][$to]); else {$itemp=$item; $itemp[1]=0;}
+							$itemp[1]+=$num;
+							$player["bank"][$to]=implode("|",$itemp);
+							msg("Вы положили в банк ".$num." ".$item[0]."<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id\">в банк</a>/<a href=\"$PHP_SELF?sid=$sid\">в игру</a>");
+							}}

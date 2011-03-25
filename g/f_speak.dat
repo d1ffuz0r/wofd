@@ -1,0 +1,62 @@
+if ($speak) {			//link—казать
+	if (($speak!=1 && substr($speak,0,5)!='user.' && substr($speak,0,4)!='npc.') || !isset($game["loc"][$player["loc"]][$speak])) msg("<p>√оворить можно только с игроками и NPC");
+	if (substr($speak,0,5)=='user.') {$to=$game["loc"][$game["players"][$speak]][$speak]["title"]; $speak=1;}	// разговор с игроком, подставим его им€ в поле в расширенном экране разговора
+	if ($player["ghost"] && $speak!=1) msg("<p>¬ы призрак и поэтому не можете ни с кем говорить, найдите лекар€ или камень воскрешени€");
+	if ($speak==1) {
+			eval(implode('',file("f_speak1.dat")));
+		} else 		// проверим, не наш ли это npc
+		if ($game["loc"][$player["loc"]][$speak]["owner"]==$login) {
+			eval(implode('',file("f_speakowner.dat")));
+		} else 		// проверим npc
+		if (isset($game["loc"][$player["loc"]][$speak]["speak"])) {
+			// $to содержит id предмета
+			if ($id=='buy') eval(implode('',file("f_speakbuy.dat")));
+			if ($id=='sell') eval(implode('',file("f_speaksell.dat")));
+			if ($id=='tobank') eval(implode('',file("f_speaktobank.dat")));
+			if ($id=='frombank') eval(implode('',file("f_speakfrombank.dat")));
+			if ($id=='razb') eval(implode('',file("f_speakrazb.dat")));
+			if ($id=='gor') eval(implode('',file("f_speakgor.dat")));
+			if ($id=='klan_podoh') eval(implode('',file("f_speakklan.dat")));
+			if ($id=='kill') eval(implode('',file("f_speakdie.dat")));
+			if ($id=='news') eval(implode('',file("f_speakpop.dat")));
+		
+
+/*mod*/			if (substr($id,0,3)=='rul') eval(implode('',file("f_speakrul.dat")));
+
+			eval(implode('',file("f_speakall.dat")));	// загружаем все диалоги
+			$dialog=$arr_speak[$game["loc"][$player["loc"]][$speak]["speak"]];
+
+			if ($dialog) {
+				if ($game["loc"][$player["loc"]][$speak]["attack"]==$login) msg("<p>¬ы не можете разговаривать с персонажем, т.к. он вас атакует");
+				unset($player["attack"]);		// сбрасываем, если мы атакуем
+				if (!$id) $id="begin";	//FIX: если не указан id, то начнем с темы "begin"
+				$dialog=split("\|",$dialog[$id]);;
+				if ($dialog[0]=='magic') {			// добавл€ем магию
+					eval(implode('',file("f_speakmagic.dat")));
+					}
+				if ($dialog[0]=='skill') {			// увеличиваем скилл
+					eval(implode('',file("f_speakskillup.dat")));
+          }						//обычный диалог
+								
+        if ($dialog[0]=='q1') {       //стартуем квест
+        eval(implode('',file("f_speakqueststart.dat")));
+                              }
+        if ($dialog[0]=='q2') {      //кончаем квест
+        eval(implode('',file("f_speakqueststop.dat")));
+                              }
+        if ($dialog[0]=='gild') {                        // покупаем вендора
+        eval(implode('',file("f_speakgild.dat")));
+                              }
+        if ($dialog[0]=='exitg') {                        // покупаем вендора
+        eval(implode('',file("f_speakgildexit.dat")));
+                              }
+        $stmp="<p>".$dialog[0];
+				for($i=2;$i<count($dialog);$i+=2) $stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=".$dialog[$i]."\">".$dialog[$i-1]."</a>";
+				if (count($dialog)==1) $stmp.="<br/><a href=\"$PHP_SELF?sid=$sid\">[ онец диалога]</a>";
+				$stmp=str_replace("<name>",$player["title"],$stmp);	// замен€ем <name> на им€ игрока
+				msg($stmp,$game["loc"][$player["loc"]][$speak]["title"],1);
+				}
+			}
+	}
+	
+

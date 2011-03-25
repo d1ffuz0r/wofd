@@ -1,0 +1,29 @@
+// апгрейд мира, копируем всех игроков, загружаем чистый мир и всех обратно
+if ($login==$admin) {
+	if (!isset($game["loc"]["loc.offline"])) eval(implode('',file("f_loadoffline.dat")));
+	$players=$game["players"];
+	$copy=array();
+	foreach(array_keys($players) as $i) $copy[$i]=$game["loc"][$players[$i]][$i];
+	unset($game);
+	eval(implode('',file("f_blank.dat")));
+	$game["players"]=$players;
+	foreach(array_keys($players) as $i) {
+		if ($players[$i]=="loc.offline") $game["loc"]["loc.offline"][$i]=$copy[$i];	// в оффлайн
+			else if (isset($locations[$players[$i]])) $game["loc"][$players[$i]][$i]=$copy[$i];	// обратно
+				else {$game["players"][$i]="loc.0"; $game["loc"]["loc.0"][$i]=$copy[$i];$game["loc"]["loc.0"][$i]["loc"]="loc.0";} // если нет такой локации, то в начальную
+		}
+	unset($copy);
+	unset($players);
+	$player=&$game["loc"][$game["players"][$login]][$login];
+	foreach(array_keys($game["players"]) as $j) { 	// раз в 20 сек
+		if (time()>$game["loc"][$game["players"][$j]][$j]["time"]+$time_logout) {
+			// в оффлайн
+			$game["loc"]["loc.offline"][$j]=$game["loc"][$game["players"][$j]][$j];
+			$game["loc"]["loc.offline"][$j]["journal"]=array();
+			unset($game["loc"][$game["players"][$j]][$j]);
+			addjournalall($game["players"][$j],$game["loc"]["loc.offline"][$j]["title"]." исчез",$j);
+			$game["players"][$j]="loc.offline";
+			}
+		}
+	addjournal($login,"Мир обновлен");
+	}

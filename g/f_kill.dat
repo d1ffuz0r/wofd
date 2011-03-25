@@ -1,0 +1,70 @@
+// если убили
+					unset($from["attack"]);
+					if ($info[2]=='f') {addjournalall($loc,$to["title"]." погибла",$toid);} else {addjournalall($loc,$to["title"]." погиб",$toid);}
+					// добавл€ем труп с вещами в локацию
+					$id = "item.stand.died.".rand(5,9999);
+					$item="труп (".$to["title"].")|";
+/*9/12*/				if (substr($toid,0,5)=='user.'){
+						$klan_id=1;
+						if ( isset($to["gild"]) ){
+							$klan_id = split("\|",$to["gild"]);
+							$klan_id = $klan_id[0]+1;
+						}
+					}
+					if (substr($toid,0,5)=='user.' && !$to["crim"]) $item.="$klan_id|"; else $item.="0|";
+					// его предметы
+					$kills=0;
+					if ($to["items"] && substr($toid,0,5)=='user.') $kills=1;
+					if ($to["items"] && substr($fromid,0,9)!='npc.guard') $kills=1;
+
+					if ($kills) foreach (array_keys($to["items"]) as $i) if (strpos($i,".imen.")) $to["bank"][$i]=$to["items"][$i]; else $item.=$i."=".str_replace("|",":",$to["items"][$i]).",";
+					// его шкура и т.д.
+					$osv_t=$to["osvej"];
+					if ( substr($fromid,0,9)=='npc.guard' && $to["osvej"]) $osv_t='';
+					$item.="|".$osv_t;
+					$game["loc"][$loc][$id]=$item;
+					// удалить труп через пару минут
+					$game["loc_del"][$loc][$id]=time()+$time_objects_destroy;
+					// статус игрока
+					if (substr($toid,0,5)=='user.') {
+						unset($to["equip"]);	// все бросаем
+						unset($to["items"]);
+						unset($to["attack"]);
+						calcparam($toid);	// пересчитаем параметры
+						$to["ghost"]=1;
+						addjournal($toid,"¬ы погибли!");
+						} else {	// npc, проверим респавн
+							if ($to["respawn"]) {
+								unset($to["attack"]);
+								unset($to["owner"]);
+								unset($to["follow"]);
+								unset($to["guard"]);
+								unset($to["time_owner"]);
+								$to["life"]=$to["life_max"];
+								$to["mana"]=$to["mana_max"];
+								$respawn=split("\|",$to["respawn"]);
+								$game["loc_add"][$respawn[0]][$toid]=array("time"=>time()+rand($respawn[1],$respawn[2]),"item"=>$game["loc"][$loc][$toid]);
+								}
+							// удал€ем npc
+							unset($game["loc"][$loc][$toid]);
+							}
+					// экспа и уровень
+					if (substr($fromid,0,5)=='user.')
+					{
+					//обновл€ем статистику			
+					if (!isset($from["st"])) $from["st"]="0|0|0|0";  
+          $st=split("\|",$from["st"]);
+					if ( substr($toid,0,5)=='user.') {$st[0]++;$st[2]++;} else {$st[1]++;$st[3]++;}
+					$from["st"]=implode("|",$st);
+
+					if ( substr($toid,0,5)!='user.') // || ($to["lag"]!=$from["lag"] && $from["lag"]!=0) )
+						{
+//	if ( substr($toid,0,5)=='user.' && $towar[13]==5) {$towar[13]=0; addjournal($fromid,"—лишком слабый противник");}
+
+						$skills=split("\|",$from["skills"]);
+						$skills[3]+=$towar[13];
+						addjournal($fromid,"ќпыт +".$towar[13]);
+						if ($skills[3]>=$fromwar[13]*$points_levelup) {$skills[3]-=$fromwar[13]*$points_levelup; $skills[4]+=1; $from["skills"]=implode("|",$skills); addjournal($fromid,"¬ы получили 1 очко опыта!");calcparam($fromid);}
+							else $from["skills"]=implode("|",$skills);
+						}
+					}

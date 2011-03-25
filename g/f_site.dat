@@ -1,0 +1,318 @@
+// страницы логина и регистрации
+//link ОсновнойСайт
+$xzf=fopen('counter.dat', 'r');
+                        $mcounter=fread($xzf, 999);
+                        fclose ($xzf); //вывели в переменную $mcounter
+                        $mcounter++;
+                        //обнуляем
+                        $xzcf=fopen('counter.dat', 'w');
+                        fwrite($xzcf, $mcounter);
+                        fclose($xzcf);
+if ($tmp==''){
+	ai();
+	$ccc=count($game["players"]);
+	$g_srv=substr($game_file,4,1);
+	if ($g_srv=="1") $g_srv1="1"; else $g_srv1="";
+	$stmp="<p align=\"center\"><b>World of Death</b><br/>---<br/><a href=\"$PHP_SELF?site=online\">[в игре $ccc человек]</a><br/>[логин]:
+<br/><input name=\"login\" size=\"10\"/><br/>[пароль]:
+<br/><input name=\"p\" type=\"password\" size=\"10\"/><br/>
+<a href=\"$PHP_SELF?login=$(login)&p=$(p)&site=connect2\">[войти]</a>
+		<br/><a href=\"$PHP_SELF?site=reg\">[регистрация]</a>
+		<br/>---
+    <br/><a href=\"$PHP_SELF?site=klan\">[кланы]</a>|<a href=\"$PHP_SELF?site=rule\">[об игре]</a>|<a href=\"$PHP_SELF?site=reit\">[рейтинг]</a>
+    <br/><a href=\"http://wtd.pdwap.org\">[форум]</a>|<a href=\"http://wen.ru/gb/?uid=310216\">[гостевая]</a>
+    <br/><a href=\"b.g\">[книга игры]</a>|<a href=\"$PHP_SELF?site=rulez\">[правила]</a>
+    <br/><a href=\"$PHP_SELF?site=baks\">[ссылки и реклама]</a>
+    <br/>=$mcounter=
+    </p><p>";
+  msg($stmp,$game_title,0,'none');
+}
+if ($site=='baks') msg("<p><b>Реклама:</b><br/><br/><a href=\"$PHP_SELF#main\">[Назад]</a>","Реклама");
+if ($site=='admin') msg("<p>Для связи с администором игры пишите на <br/><b>mail: gladk0w@mail.ru<br/>icq: 413388662</b><br/><b>IRC:</b> server: <b>irc.tsk.ru</b>, port: <b>6669</b>, kannel: <b>#live</b>,nick:<b>dr_d00m</b><br/><a href=\"$PHP_SELF#main\">[Назад]</a>","Админ",0,'none');
+if ($site=='rule') msg("<p>Версия [".$version."]<br/>".$game_title." - это многопользовательская on-line текстовая RPG игра , в которую можно играть с мобильного телефона через WAP.<br/>Путешествуя по миру игры(свыше 1250 локаций), ты сможешь разговаривать с игровыми персонажами и другими игроками, выполнять квесты, воевать. Тебе будут доступны сотни предметов и десятки заклинаний которые сможешь использвать, сможешь торговать, развивать свои навыки и многое, многое другое... При этом одновременно с вами в игре может находиться неограниченное число других игроков, взаимодействие с которыми происходит в режиме реального времени. Здесь ты найдёшь друзей, может и свою вторую половинку, ну и не обойтись без врагов... Но осторожно! Некоторые заходили в игру раз, и оставались в ней на годы... Удачи! <br/>[dr_d00m] <br/><a href=\"$PHP_SELF#main\">[Назад]</a>","Правила",0,'none');
+if ($site=='pomog') msg("<p>Для развития игры каждый желающий может перевести n-ную сумму на на следующие WM кошельки:<br/>
+<b>Z117096156763<br/>
+U333159250710<br/>
+R186931076699<br/>
+E34523522684</b><br/><a href=\"$PHP_SELF#main\">[Назад]</a>","Помощь");
+if ($site=="rulez") {
+$msg="1. <b>Запрещается</b> унижать или каким-то образом обижать игроков, ведь они такие-же люди, как и вы.  <br/>2. <b>Запрещено</b> материться <b>ПО ЛЮБОМУ ПОВОДУ</b>! <br/>3. <b>Запрещена</b> прокачка персонажа, то есть, один ''умник'' с разных телефонов играет разными персонажами, при этом прокачивает одного<br/>4. <b>НЕЛЬЗЯ</b> МОЛЧАТЬ О НЕЗАКРЫТЫХ ДЫРКАХ В ИГРЕ. Если кто-нибудь что-нибудь узнает о клонировании вещей, или подобных вещах, просьба сообщать админам.<br/>5. Если вашего персонажа стёрло, не проклинайте админов игры. <b>СОХРАНЯЙТЕ</b> вашего персонажа. Если же вы не сохранились, и вашего персонажа стёрло, ничем вам помочь не можем.<br/>6. <b>Соблюдать <i>все</i></b> вышеперечисленные пункты.<br/>Нарушение правил может обернуться стиранием вашего персонажа. Так же по-новый начать игру будет нельзя.";
+ msg($msg, 'Правила', 0, 'none');
+        };
+if ($site=='connect') {	//linkЛогин
+$stmp="[логин]:
+<br/><input name=\"login\"/>
+<br/>[пароль]:
+<br/><input name=\"p\" type=\"password\"/>
+<br/><a href=\"$PHP_SELF?login=$(login)&p=$(p)&site=connect2\">[войти]</a>
+<br/><a href=\"$PHP_SELF?site=reg\">[регистрация]</a>";
+	msg($stmp,$game_title,0,'none');
+	}
+
+
+
+if ($site=='online') {	//кто онлайн		//linkОнлайн
+	ai();	// обновим список
+  $count_show1=14;
+	$stmp='';
+	if (count($game["players"])>0) {
+		$ind=0;
+		$count=0;
+		if ($start<0 || !$start) $start=0;
+		$online=array_keys($game["players"]);
+		foreach($online as $i) {
+			if ($ind>=$start) {
+		$m_st="";
+                    if ($game["loc"][$game["players"][$i]][$i]["lag"]=="1") $m_st="[гор]";
+                    if ($game["loc"][$game["players"][$i]][$i]["lag"]=="2") $m_st="[разб]";
+                    if ($game["loc"][$game["players"][$i]][$i]["gild"]) $m_st="[".$game["loc"][$game["players"][$i]][$i]["gild"]."]";
+                   
+      $stmp.="<br/><b> ".$game["loc"][$game["players"][$i]][$i]["title"]."</b> $m_st";
+			$count++;
+			if ($count>=$count_show1) break;	// след. страница, если слишком много человек или предметов
+			}
+			$ind++;
+			}
+		if ($start && $start-$count_show1>=0) $stmp.="\n<br/><a href=\"$PHP_SELF?site=online&start=".($start-$count_show1)."\">[&#8592;]</a>";
+		if ($count+$start<count($game["players"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= " <a href=\"$PHP_SELF?site=online&start=".($count+$start)."\">[&#8594;]</a>";}
+		} else $stmp.="Сейчас онлайн никого нет";
+
+	msg($stmp,"Онлайн",0,'none');
+	}
+
+if ($site=='reit'){
+	ai();
+	$stmp='';
+	if (count($game["players"])>0) {
+		$stmp.="Рейтинг онлайн игроков:";
+		$ind=0;
+		$count=0;
+		if ($start<0 || !$start) $start=0;
+		$online=array_keys($game["players"]);
+		$reit=array();
+		foreach($online as $i) {
+			$st1=split("\|",$game["loc"][$game["players"][$i]][$i]["st"]);
+			$sum=$st1[2]+$st1[3];
+			$reit[$i]=$sum;
+		}
+		arsort($reit);
+		foreach(array_keys($reit) as $i) {
+			if ($ind>=$start) {
+		$m_st="";
+                    if ($game["loc"][$game["players"][$i]][$i]["lag"]!="0") $m_st="[".$game["loc"][$game["players"][$i]][$i]["lag"]."]";
+                    if ($game["loc"][$game["players"][$i]][$i]["lag"]=="1") $m_st="[гор]";
+                    if ($game["loc"][$game["players"][$i]][$i]["lag"]=="2") $m_st="[разб]";
+					if ( !isset($game["loc"][$game["players"][$i]][$i]["st"]) ) $game["loc"][$game["players"][$i]][$i]["st"]="0|0|0|0";  
+                                        $st1=split("\|",$game["loc"][$game["players"][$i]][$i]["st"]);
+					$m_st.="<br/>Убито: $st1[2]ч. + $st1[3]м.";
+			$stmp.="\n<br/>+ ".$game["loc"][$game["players"][$i]][$i]["title"].$m_st;
+			$count++;
+			if ($count>=$count_show) break;	// след. страница, если слишком много человек или предметов
+			}
+			$ind++;
+			}
+		if ($start && $start-$count_show>=0) $stmp.="\n<br/><a href=\"$PHP_SELF?site=reit&start=".($start-$count_show)."\">[-]</a>";
+		if ($count+$start<count($game["players"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= " <a href=\"$PHP_SELF?site=reit&start=".($count+$start)."\">[+]</a>";}
+		} else $stmp.="Сейчас онлайн никого нет";
+
+	msg($stmp,"Рейтинг",0,'none');
+	}
+if ($site=='klan'){
+//include ("klan.dat");
+$stmp.="";
+
+msg($stmp,"Кланы",0,'none');
+
+}
+if ($site=='connect2') {
+	if (substr($login,0,5)!='user.') $login='user.'.$login;
+
+	if (isset($game["loc"][$game["players"][$login]][$login]["info"])) {
+		$info=split("\|",$game["loc"][$game["players"][$login]][$login]["info"]);
+		if ($info[0]!=$p) msg("Неправильный пароль",$game_title,0,'none');
+//новые навыки
+
+$skills=split("\|",$game["loc"][$game["players"][$login]][$login]["skills"]);
+if ( !isset($skills[22]) ) $skills[22]=0;
+if ( !isset($skills[23]) ) $skills[23]=0;
+if ( !isset($skills[24]) ) $skills[24]=0;
+if ( !isset($skills[25]) ) $skills[25]=0;
+if ( !isset($skills[26]) ) $skills[26]=0;
+if ( !isset($skills[27]) ) $skills[27]=0;
+if ( !isset($skills[28]) ) $skills[28]=0;
+if ( !isset($skills[29]) ) $skills[29]=0;
+if ( !isset($skills[30]) ) $skills[30]=0;
+$game["loc"][$game["players"][$login]][$login]["skills"]=implode("|",$skills);
+//---
+$newsdate=date("d/m",filemtime("news1.dat"));
+msg("<a href=\"http://click.realsex.in/in.php?s=3375a\">*бесплатное порно*</a><br/>
+<a href=\"$PHP_SELF?sid=$sid&new3=1\">[новости $newsdate]</a><br/>
+<a href=\"$PHP_SELF?sid=$sid&npass=1\">[сменить пароль]</a><br/>
+<a href=\"$PHP_SELF?sid=$sid&set=1\">[настройки]</a><br/>
+---<br/>
+Логин успешно.<br/>Сохраните закладку на эту страницу для автологина.<br/>Для выхода используйте \"Сохранить\"<br/><a href=\"$PHP_SELF?sid=$sid\">[в игру]</a><br/>---<br/><a href=\"$PHP_SELF?site=pomog\">[помощь игре]</a>
+	  <br/><a href=\"$PHP_SELF?site=admin\">[администрация]</a>");
+		//$look=1; // при первом заходе выведем инфу о локации
+		}else
+{
+        if (substr($login,0,5)!='user.') $login='user.'.$login;
+	$fileopen="save/$login.dat";
+	$fileopen1="save1/$login.dat";
+	$fileopen2="save2/$login.dat";
+//грузим из save1, если нет - из save
+if (file_exists("act1/$login.dat")) msg("Ваша учетная запись отключена. Обратитесь к администратору игры.",$game_title,0,'none');
+
+if (!file_exists($fileopen)) $fileopen=$fileopen1;
+if (file_exists($fileopen)) if (filesize($fileopen)==0) $fileopen=$fileopen2;
+	if (file_exists($fileopen))
+	{
+		$play = implode("",file($fileopen));
+		$play = unserialize($play);
+
+            	$info=split("\|",$play["info"]);
+		if ($info[0]!=$p) msg("Неправильный пароль",$game_title,0,'none');
+		$payu = substr($login,5);
+
+			$loc=$play["loc"];
+eval(implode('',file("loc.dat")));
+if ( !isset($locations[$loc]) ) $loc="loc.0";
+			$game["loc"][$loc][$login]=$play;
+			$game["players"][$login]=$loc;
+
+			if ($info[2]=='f') { addjournalall($loc,"Появилась ".$game["loc"][$loc][$login]["title"],$login);} else { addjournalall($loc,"Появился ".$game["loc"][$loc][$login]["title"],$login); }
+			
+			if ($game["loc"][$loc][$login]["crim"]) {$game["loc"][$loc][$login]["time_crim"]=time()+$game["loc"][$loc][$login]["time_crim"]-$game["loc"][$loc][$login]["time"];}
+			$game["loc"][$loc][$login]["time_regenerate"]=time();
+			unset($game["loc"][$loc][$login]["look"]);
+			$game["loc"][$loc][$login]["time"]=time();
+					if (!isset($game["loc"][$loc][$login]["st"])) $game["loc"][$loc][$login]["st"]="0|0|0|0";  
+                                        $st1=split("\|",$game["loc"][$loc][$login]["st"]);
+					$st1[0]=0; $st1[1]=0;
+					$game["loc"][$loc][$login]["st"]=implode("|",$st1);
+//обнуляем лагерь если распустили
+
+$lager=$game["loc"][$loc][$login]["lag"];
+$vt1 = unserialize(implode("",file("klan.dat")));
+$vt1 = array();
+if (!isset($vt1[$lager][$login]) && $lager!="0" && $lager!="1" && $lager!="2") $game["loc"][$loc][$login]["lag"]="0";
+//новые навыки
+
+$skills=split("\|",$game["loc"][$loc][$login]["skills"]);
+if ( !isset($skills[22]) ) $skills[22]=0;
+if ( !isset($skills[23]) ) $skills[23]=0;
+if ( !isset($skills[24]) ) $skills[24]=0;
+if ( !isset($skills[25]) ) $skills[25]=0;
+if ( !isset($skills[26]) ) $skills[26]=0;
+if ( !isset($skills[27]) ) $skills[27]=0;
+if ( !isset($skills[28]) ) $skills[28]=0;
+if ( !isset($skills[29]) ) $skills[29]=0;
+if ( !isset($skills[30]) ) $skills[30]=0;
+// античит :)
+if ( $skills[0]+$skills[1]+$skills[2]>$points_limit_attr ){	// -5 пунктов
+	$skills[0]-= 5;
+	$skills[1]-= 5;
+	$skills[2]-= 5;
+	if ( $skills[0]<1 ) $skills[0] = 1;
+	if ( $skills[1]<1 ) $skills[1] = 1;
+	if ( $skills[2]<1 ) $skills[2] = 1;
+	$skills[3] = 0;	// обнулим опыт
+	$skills[4] = 0;	// обнулим очки опыта
+}
+$game["loc"][$loc][$login]["skills"]=implode("|",$skills);
+
+$game["loc"][$loc][$login]["p_m"]=0;
+$newsdate=date("d/m",filemtime("news1.dat"));
+msg("<a href=\"http://click.realsex.in/in.php?s=3375a\">*бесплатное порно*</a><br/>
+<a href=\"$PHP_SELF?sid=$sid&new3=1\">[новости $newsdate]</a><br/>
+<a href=\"$PHP_SELF?sid=$sid&npass=1\">[сменить пароль]</a><br/>
+<a href=\"$PHP_SELF?sid=$sid&set=1\">[настройки]</a><br/>
+---<br/>
+Логин успешно.<br/>Сохраните закладку на эту страницу для автологина.<br/>Для выхода используйте \"Сохранить\"<br/><a href=\"$PHP_SELF?sid=$sid\">[в игру]</a><br/>---<br/><a href=\"$PHP_SELF?site=pomog\">[помощь игре]</a>
+	  <br/><a href=\"$PHP_SELF?site=admin\">[администрация]</a>");
+}
+	else msg ("Такой логин не существует, вам надо зарегистрироваться",$game_title,0,'none');
+
+}
+	}
+
+if ($site=='reg') {		//linkРегистрация
+$stmp="[логин]:
+<br/><input name=\"login\"/>
+<br/>[пароль]:
+<br/><input name=\"p\"/>
+<br/>[e-mail]:
+<br/><input name=\"email\"/>
+<br/>[пол]:
+<br/><select name=\"sex\" value=\"m\">
+<option value=\"m\">Муж.</option>
+<option value=\"f\">Жен.</option>
+</select>
+<br/>[возраст]:
+<br/><input format=\"*N\" maxlength=\"2\" name=\"age\"/>
+<br/><a href=\"$PHP_SELF?login=$(login)&p=$(p)&email=$(email)&title=$(login)&sex=$(sex)&age=$(age)&site=reg2\">[продолжить]</a>";
+	msg($stmp,$game_title,0,'none');
+	}
+
+if ($site=='reg2') {
+if ( strlen($login)>30 ) mailadmin("login - $login");
+if ( strlen($age)>2 ) mailadmin("age - $age");
+if ( strlen($email)>30 ) mailadmin("email - $email");
+if ( strlen($p)>30 ) mailadmin("p - $p");
+if ( strlen($sex)>2 ) mailadmin("sex - $sex");
+
+if (substr($login,0,5)=='user.') $login=substr($login,5);
+$title=$login;
+
+if (ereg("[^a-zA-Z0-9_]+",$login)) msg("Только лат. буквы и цифры в логине.<br/><anchor>[назад]<prev/></anchor>",$game_title,0,'none');
+if (ereg("[^0-9]+",$age)) msg("Неверный возраст.<br/><anchor>[назад]<prev/></anchor>",$game_title,0,'none');
+if (!ereg("[[:alnum:]]+@[[:alnum:]]+\.[[:alnum:]]+",$email)) msg("Неверный email.<br/><anchor>[назад]<prev/></anchor>",$game_title,0,'none');
+
+	if (!$login) msg("Заполните все поля.<br/><anchor>[назад]<prev/></anchor>",$game_title,0,'none');
+	if (!preg_match("/\w/",$title)) msg("В имени должны присутствовать буквы или цифры.<br/><anchor>[назад]<prev/></anchor>",$game_title,0,'none');
+	if (substr($login,0,5)!='user.') $login='user.'.$login;
+	$fileopen1="save/$login.dat";
+	$fileopen2="save1/$login.dat";
+
+if (file_exists($fileopen1)) msg("Такой логин уже существует, выберите другой<br/><a href=\"$PHP_SELF?reg=1\">[назад]</a>",$game_title,0,'none');
+if (file_exists($fileopen2)) msg("Такой логин уже существует, выберите другой<br/><a href=\"$PHP_SELF?reg=1\">[назад]</a>",$game_title,0,'none');
+
+	foreach(array_keys($game["players"]) as $i) {
+		if ($login==$i) msg("Такой логин уже существует, выберите другой<br/><a href=\"$PHP_SELF?reg=1\">[назад]</a>",$game_title,0,'none');
+		if ($title==$game["loc"][$game["players"][$i]][$i]["title"]) msg("Имя ".$title." уже занято, выберите другое<br/><a href=\"$PHP_SELF?reg=1\">[назад]</a>",$game_title,0,'none');
+		}
+
+	if (!isset($game["players"][$login])) {
+		if (!$p || !$email || !$sex || !$age || !$title) msg("Заполните все поля!<br/><a href=\"$PHP_SELF?reg=1\">[назад]</a>",$game_title,0,'none');
+		// сохраняем логин в сессии
+//		if ($usesession) $_SESSION["login"]=$login;
+/*mod*/
+		$lag="0";
+		$ploc="loc.0";
+		if ($lag=="2") $ploc="loc.new.der";
+/*mod*/
+		$game["players"][$login]=$ploc;
+		$game["loc"][$ploc][$login] = array(
+			"title"=>$title,
+			"lag"=>$lag, 
+			"info"=>"$p|$email|$sex|$age|".time(),	// инфа и время создания
+// skills=str|dex|int|level|points|meditation|steal|animaltaming|hand|coldweapon|ranged|parring|uklon|magic|magic_resist|magic_uklon|regeneration|hiding|look|steallook|animallore|spirit|derevo|ingen|mask|rxb|kow|rud|repair|alhemy
+			"skills"=>"1|1|1|0|2|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0",
+			"loc"=>$ploc, 
+			"ghost"=>"0", 
+			"crim"=>"0",
+			"time"=>time(), 
+			"macros"=>array(),
+			"journal"=>array(),
+			"equip"=>array(),
+			"items"=>array(
+					"item.note"=>"записка|1|0|Здравствуй, мой друг! Знаю, тебе нелегко придется в первое время, но есть люди, которые могут помочь тебе бесплатно. Обо всем остальном тебе расскажет привратник Уин. Удачи и береги себя! подпись: dr_d00m",
+					),
+			"magic"=>array(),
+			"msg"=>array(),
+			);
+		calcparam($login);	// обновим все значения
+		
+    msg("Регистрация завершена<br/><a href=\"$PHP_SELF?login=$login&p=$p&site=connect2\">[начать игру]</a>",$game_title,0,'none');
+		} else msg("Персонаж с логином $login уже существует, задайте другой<br/><a href=\"$PHP_SELF?reg=1\">[назад]</a>",$game_title,0,'none');
+	}
+

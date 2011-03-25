@@ -1,0 +1,25 @@
+// список магии
+
+	// в $to цель, если есть
+	if (count($player["magic"])==0) msg("<p>У вас нет ни одного заклинания");
+	eval(implode('',file("f_magic.dat")));	// загружаем всю магию
+	if ($macro==1) $m="&macros=list&num=$num&name=$name&act=$act#add"; else $m='';
+	$stmp="<p>";
+	$ind=0; $count=0; if(!$start) $start=0;
+	foreach($player["magic"] as $i) {
+		if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+		$mt=split("\|",$arr_magic[$i]);
+		if ($to) {
+			$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&to=$to&use=".$i.$m."\">";
+			$stmp.=$mt[0]."</a>";
+			} else {	// в след. экране all выберем цель $to для использования
+				$stmp.="\n<br/><anchor>".$mt[0]."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+				}
+		}
+		$ind++;
+		}
+	if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&list=magic\">^ </a>";}
+	if ($start+$count_show<count($player["magic"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&list=magic&start=".($start+$count_show)."\">+ (".(count($player["magic"])-$start-$count_show).")</a>";}
+	// карта меню
+	$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<a href=\"$PHP_SELF?sid=$sid&use=$(to)\">Кастовать</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&look=$(to)\">Инфо</a>\n";
+	msg($stmp,"Магия",1);

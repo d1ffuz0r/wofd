@@ -1,0 +1,18 @@
+// добавление магии
+
+					// проверим, может така€ маги€ уже есть
+					if (isset($player["magic"][$dialog[1]])) msg("<p>” вас уже есть это заклинание");
+					// проверим минимальный уровень
+					$skills=split("\|",$player["skills"]);
+					if ($skills[13]<$dialog[3]) msg("<p>” вас недостаточный навык ћаги€ (надо минимум ".$dialog[3].")");
+					// проверим, хватит ли денег
+					$b=0;
+					if ($player["items"]["item.misc.money"]) {
+						$money=split("\|",$player["items"]["item.misc.money"]);
+						$money[1]-=$dialog[2];
+						if ($money[1]>=0) {$b=1; if ($money[1]==0) unset($player["items"]["item.misc.money"]); else $player["items"]["item.misc.money"]=implode("|",$money);}
+						}
+					if (!$b) msg("<p>” вас недостаточно денег (надо ".$dialog[2]." монет)");
+					// добавл€ем заклинание в список
+					$player["magic"][$dialog[1]]=$dialog[1];
+					msg("<p>¬ы выучили новое заклинание!");

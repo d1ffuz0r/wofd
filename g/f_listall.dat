@@ -1,0 +1,39 @@
+// список всех объектов в локации и инвентори
+
+	// в $use что использовать, здесь надо определить $to
+	// выводим ссылку на себя, все окружение и все инвентори в отдельной карте
+	$stmp="<p><a href=\"$PHP_SELF?sid=$sid&to=".$login."&use=$use\">На себя</a>";
+	// по всем предметам в локации
+	$stmp.="\n<br/>Объекты:";
+	$ind=0; $count=0; if(!$start) $start=0;
+	if ($game["loc"][$player["loc"]]) foreach(array_keys($game["loc"][$player["loc"]]) as $i) if ($i!=$login) {
+		if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+		$stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&to=".$i."&use=$use\">";
+		if (substr($i,0,5)=='user.' || substr($i,0,4)=='npc.') $stmp.=$game["loc"][$player["loc"]][$i]["title"];
+			else {
+				$k=split("\|",$game["loc"][$player["loc"]][$i]);
+				if ($k[1]>1) $stmp.=$k[0]." (".$k[1].")"; else $stmp.=$k[0];
+				}
+		$stmp.="</a>";
+		}
+		$ind++;
+		}
+	if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&list=all&use=$use\">^ </a>";}
+	if ($start+$count_show<count($game["loc"][$player["loc"]])) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&list=all&use=$use&start=".($start+$count_show)."\">+ (".(count($game["loc"][$player["loc"]])-$start-$count_show).")</a>";}
+
+	// по всем предметам в инвентори
+	$stmp.="\n<br/>Инвентори:";
+	$ind=0; $count=0; if(!$start) $start=0;
+	if ($player["items"]) foreach(array_keys($player["items"]) as $i) {
+		if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+		$k=split("\|",$player["items"][$i]);
+		if ($k[1]>1) $k=$k[0]." (".$k[1].")"; else $k=$k[0];
+		if ($player["equip"] && array_search($i,$player["equip"])) $k.=" [одето]";
+		$stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&to=$i&use=$use\">".$k."</a>";
+		}
+		$ind++;
+		}
+	if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&list=all&use=$use\">^ </a>";}
+	if ($start+$count_show<count($player["items"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&list=all&use=$use&start=".($start+$count_show)."\">+ ".(count($player["items"])-$start-$count_show)."</a>";}
+
+	msg($stmp);

@@ -1,0 +1,77 @@
+
+					if (!$game["loc"][$player["loc"]][$speak]["trader"]) msg("<p>Это не продавец");
+					$trader=split("\|",$game["loc"][$player["loc"]][$speak]["trader"]);
+					// составим массив items и update
+					if (count($game["loc"][$player["loc"]][$speak]["bank"])==0) msg("<p>У меня нет товаров");
+					$items=array(); $update=array();
+					foreach(array_keys($game["loc"][$player["loc"]][$speak]["bank"]) as $i) {
+						$st=split("=",$game["loc"][$player["loc"]][$speak]["bank"][$i]);
+						$update[$i]=$st[0];
+						$items[$i]=$st[1];
+						}
+					// проверим время обновления товаров
+					if (time()>$game["loc"][$player["loc"]][$speak]["trader_time"]) {
+						foreach(array_keys($update) as $i) {
+							$upd=split("\|",$update[$i]);
+							$item=split("\|",$items[$i]);
+							if (rand(0,100)>$upd[0]) $item[1]=0; else $item[1]=rand($upd[1],$upd[2]);
+							$items[$i]=implode("|",$item);
+							}
+						$game["loc"][$player["loc"]][$speak]["trader_time"]=time()+$trader[2];
+						// т.к. изменили товары
+						foreach(array_keys($items) as $i) $game["loc"][$player["loc"]][$speak]["bank"][$i]=$update[$i]."=".$items[$i];
+						}
+					if (!$to) {		// список
+						$stmp="<p>На продажу:";
+						$ind=0;$count=0;if ($start<0 || !$start) $start=0;
+						foreach(array_keys($items) as $i) {
+							if ($ind>=$start) {
+							$k=split("\|",$items[$i]);
+							if ($k[1]==0) continue;		// товары с кол-вом 0 пропускаем
+							if ($k[1]>1) $s=$k[0]." (".$k[1].")"; else $s=$k[0];
+							$s.=": ".round($k[2]*$trader[0]);
+							$stmp.="\n<br/><anchor>".$s."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+							$count++;
+							if ($count>=$count_show) break;	// след. страница, если слишком много человек или предметов
+							}
+							$ind++;
+							}
+						if ($start && $start-$count_show>=0) $stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id\">^ </a>";
+						if ($count+$start<count($items)) {if (!$start) $stmp.="\n<br/>"; $stmp.= " <a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&start=".($count+$start)."\">[+]</a>";}
+						$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$(to)\">Купить</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=$speak&look=$(to)\">Инфо</a>";
+						msg($stmp);
+						}else {	// передаем $to
+							if (!isset($items[$to])) msg("<p>Этого предмета нет");
+							$item=split("\|",$items[$to]);
+							// проверим кол-во
+							if ($item[1]==0) msg("<p>Этого предмет кончился, зайдите в другой раз");
+							$num=intval($num);
+							if ($item[1]>1 && !$num) {		// запросим кол-во
+								$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$to&num=$(num)\">ok</a>";
+								msg($stmp);
+								}
+							if (!$num || $num<1) $num=1;
+							if ($num>$item[1]) $num=$item[1];
+							// считаем стоимость всех предметов с учетом коэфф продавца
+							$price=round($item[2]*$num*$trader[0]);
+							// проверяем, хватит ли денег
+							$b=0;
+							if (!isset($player["items"]["item.misc.money"])) $b=1; else {$m=split("\|",$player["items"]["item.misc.money"]); if ($m[1]<$price) $b=1;}
+							if ($b) msg("<p>Недостаточно денег (надо ".$price." монет)");
+							// забираем деньги
+							$m=split("\|",$player["items"]["item.misc.money"]);
+							$m[1]-=$price;
+							if ($m[1]==0) unset($player["items"]["item.misc.money"]); else $player["items"]["item.misc.money"]=implode("|",$m);
+							// удаляем из банка продавца
+							$item[1]-=$num;
+							if ($item[1]<0) $item[1]=0;
+							$items[$to]=implode("|",$item);
+							// добавляем игроку в items
+							if (isset($player["items"][$to])) $itemp=split("\|",$player["items"][$to]); else {$itemp=$item; $itemp[1]=0;}
+							$itemp[1]+=$num;
+							$player["items"][$to]=implode("|",$itemp);
+							// т.к. изменили товары
+							calcparam($login);
+							foreach(array_keys($items) as $i) $game["loc"][$player["loc"]][$speak]["bank"][$i]=$update[$i]."=".$items[$i];
+							msg("Вы купили ".$num." ".$item[0]." за ".$price." монет");
+							}

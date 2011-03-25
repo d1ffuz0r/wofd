@@ -1,0 +1,61 @@
+					if (!$game["loc"][$player["loc"]][$speak]["trader"]) msg("<p>Это не продавец");
+					$trader=split("\|",$game["loc"][$player["loc"]][$speak]["trader"]);
+					if ($game["loc"][$player["loc"]][$speak]["trader_filter"]) $filter=split("\|",$game["loc"][$player["loc"]][$speak]["trader_filter"]); else $filter="";
+
+					if (!$to) {		// список
+						$stmp="<p>Я могу купить:";
+						$ind=0;$count=0;if ($start<0 || !$start) $start=0;
+						if (count($player["items"])==0) msg("<p>У вас нет товаров на продажу");
+						foreach(array_keys($player["items"]) as $i) {
+							if ($ind>=$start) {
+							// проверим фильтр товаров
+							$b=1;
+							if ($filter) {$b=0; foreach($filter as $j) if (strpos($i,$j)===0 || strpos($i,$j)) {$b=1; break;}}
+							if (substr($i,0,15)=="item.misc.money") $b=0;	// деньги не покупаем :-)
+							if (!$b) continue; 	// покупаем только товары, кот. есть в фильтре
+							$k=split("\|",$player["items"][$i]);
+							$price=round($k[2]*$trader[1]);
+							if ($price==0) continue; // за 0 монет не покупаем
+							if ($k[1]>1) $s=$k[0]." (".$k[1].")"; else $s=$k[0];
+							$s.=": ".$price;
+							$stmp.="\n<br/><anchor>".$s."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+							$count++;
+							if ($count>=$count_show) break;	// след. страница, если слишком много человек или предметов
+							}
+							$ind++;
+							}
+						if ($start && $start-$count_show>=0) $stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id\">^ </a>";
+						if ($count+$start<count($player["items"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= " <a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&start=".($count+$start)."\">[+]</a>";}
+						$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$(to)\">Продать</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=$speak&look=$(to)\">Инфо</a>";
+						msg($stmp);
+						}else {	// передаем $to
+							if (!isset($player["items"][$to])) msg("<p>Этого предмета нет");
+							
+							if (strpos($to,".imen.")){
+								mail("gladk0w@mail.ru","sell imen","$login - $to");
+								msg("<p>Вы не можете продать именной предмет!");
+							}
+							$item=split("\|",$player["items"][$to]);
+							
+							// проверим кол-во
+							$num=intval($num);
+							if ($item[1]>1 && !$num) {		// запросим кол-во
+								$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$to&num=$(num)\">ok</a>";
+								msg($stmp);
+								}
+							if (!$num || $num<1) $num=1;
+							if ($num>$item[1]) $num=$item[1];
+							// считаем стоимость всех предметов с учетом коэфф продавца
+							$price=round($item[2]*$num*$trader[1]);
+							// добавляем деньги
+							if (!isset($player["items"]["item.misc.money"])) $player["items"]["item.misc.money"]="монеты|".$price."|1";
+								else {
+								$m=split("\|",$player["items"]["item.misc.money"]);
+								$m[1]+=$price;
+								$player["items"]["item.misc.money"]=implode("|",$m);
+								}
+							// удаляем из items игрока
+							$item[1]-=$num;
+							if ($item[1]<1) {unset($player["items"][$to]); calcparam($login);} else $player["items"][$to]=implode("|",$item);
+							msg("Вы продали ".$num." ".$item[0]." за ".$price." монет");
+							}

@@ -1,0 +1,9 @@
+// эта функция выводит на экран содержимое указанного файла, например, из старых сохраненок
+
+		if (file_exists($file)) {
+			$viewtmp = implode("",file($file));
+			$viewtmp = unserialize($viewtmp );
+			} else $viewtmp = "<p>no such file<p>";
+echo "<pre>";
+print_r($viewtmp);
+echo "</pre>";

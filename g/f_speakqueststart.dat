@@ -1,0 +1,6 @@
+$q_id=$dialog[1]; //id квеста
+eval(implode('',file("f_questdb.dat")));
+if ($player['q'][$q_id]) msg("Вы уже прошли этот квест!"); else {
+$player['items']['item.note.imen.q'.$q_id.'']=$qq[$q_id]['start'];
+msg("Вы получили задание на квест: ".$qq[$q_id]['title']."!");
+       };

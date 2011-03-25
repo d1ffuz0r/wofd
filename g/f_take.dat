@@ -1,0 +1,38 @@
+if ($take) {			//linkПоднять
+	// $take=id предмета [$item=id предмета с трупа, $num=кол-во]
+	// FIX: надо проверить вес
+  // проверки
+	if (substr($take,0,5)!='item.') msg("<p>И как вы себе это представляете? :-)");
+	if (!isset($game["loc"][$player["loc"]][$take])) msg("<p>Нечего взять");
+	if (substr($take,0,11)=='item.stand.' && substr($take,0,16)!='item.stand.died.' && substr($take,0,20)!='item.stand.ressurect') msg("<p>Этот предмет нельзя взять");
+	if ($player["ghost"]) if (substr($take,0,20)=='item.stand.ressurect') ressurect($login); else msg("<p>Вы призрак и поэтому не можете ничего передать, поднять или бросить, найдите лекаря или камень воскрешения");
+  // берем предмет с трупа
+	if (substr($take,0,16)=='item.stand.died.') {
+		eval(implode('',file("f_takedied.dat")));
+		}//if с трупа
+        if (substr($take,0,9)=='item.port') {
+                eval(implode('',file("f_teleport.dat")));
+                }//if с телепорта
+	// берем предмет из локации
+	if (substr($take,0,11)!='item.stand.') {
+		$item=split("\|",$game["loc"][$player["loc"]][$take]);
+		// проверим кол-во
+		$num=intval($num);
+		if ($item[1]>1 && !$num) {		// запросим кол-во
+			$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take&num=$(num)\">ok</a><a href=\"$PHP_SELF?sid=$sid&take=$take&num=100000\">все</a>";
+			msg($stmp);
+			}
+		if (!$num || $num<1) $num=1;	// если не указано, то 1 предмет
+		if ($num>$item[1]) $num=$item[1];	// и максимум берем все что есть
+		// удаляем из локации
+		$item[1]-=$num;
+		if ($item[1]<=0) unset($game["loc"][$player["loc"]][$take]); else $game["loc"][$player["loc"]][$take]=implode("|",$item);
+		if (isset($game["loc_del"][$player["loc"]][$take])) unset($game["loc_del"][$player["loc"]][$take]);	// таймер удаления
+		// добавляем игроку в items
+		if (isset($player["items"][$take])) $itemp=split("\|",$player["items"][$take]); else {$itemp=$item; $itemp[1]=0;}
+		$itemp[1]+=$num;
+		$player["items"][$take]=implode("|",$itemp);
+		addjournal($login,"Вы подняли ".$num." ".$item[0]);
+		if ($info[2]=='f') {addjournalall($player["loc"],$player["title"]." подняла ".$num." ".$item[0],$login);} else {addjournalall($player["loc"],$player["title"]." поднял ".$num." ".$item[0],$login);}
+		}//if из локации
+	}

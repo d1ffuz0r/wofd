@@ -1,0 +1,54 @@
+//<?
+$mon=explode("|", $player['items']['item.misc.money']);
+if ($mon[1]<=$dialog[2] && !$b) {
+          msg("У вас мало денег, надо ".$dialog[2]." монет");
+        $b='';
+        }
+
+        else  $b=1;
+
+
+
+if (@!$gildmaster || @!$gildname) {
+  $msg="Название клана:<br/><input type=\"text\" name=\"gildname\"/><br/>\n
+
+  <anchor>Да<go href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&gildmaster=$login\" method=\"post\">
+  <postfield name=\"gildname\" value=\"$(gildname)\"/>
+  </go>
+  </anchor>
+  ";
+ }else {
+
+
+
+
+$gildname=($gildname);
+// echo $gildname;
+ if (substr($gildmaster, 0, 2)!='user.') $gildmaster="$gildmaster";
+  $f=fopen("gilds.dat", "r+");
+  $r=fread($f, filesize("gilds.dat"));
+  fclose($f);
+  if (!isset($game['loc'][$game[players][$gildmaster]][$gildmaster])) msg("Не найден игрок $gildmaster или он находится оффлайн");
+  if (ereg("$gildname", $r)) msg("Имя гильдии уже забита!");
+  if (isset($game['loc'][$game[players][$gildmaster]][$gildmaster]['gild'])) msg("Игрок уже и так в гильдии!");
+//gilds.dat
+  $gm=&$game['loc'][$game[players][$gildmaster]][$gildmaster];
+  $gm['gild']="сеньор|$gildname";
+  $f=fopen("gilds.dat", "a+");
+  fwrite($f, "$gildname|");
+//klan.dat
+  $vt1 = unserialize(implode("",file("klan.dat")));
+  $vt1[$gildname][$login]="2";
+  $fl1 = fopen ("klan.dat", "w");
+  fputs($fl1,serialize($vt1));
+  fclose ($fl1);            
+
+       $mon=explode("|", $player['items']['item.misc.money']);
+            $mon[1]=$mon[1]-$dialog[2];
+
+            $player['items']['item.misc.money']=implode("|", $mon);
+
+    $msg.="Выполнено! Поздравляем с новой должностью!";
+ };
+
+   msg($msg);

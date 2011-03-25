@@ -1,0 +1,124 @@
+	if ((substr($fromid,0,5)!='user.' && substr($fromid,0,4)!='npc.') || (substr($toid,0,5)!='user.' && substr($toid,0,4)!='npc.')) return;	// только игроки и нпс
+	if ( substr($toid,0,4)=='npc.' && $game["loc"][$loc][$toid]["speak"]) return;
+	$from=&$game["loc"][$loc][$fromid];
+	if (!$from || $from["ghost"]) return;
+	//проверим время отдыха (кроме когда отвечаем)
+	if (!$answer && time()<=$from["time_speed"]) return;
+
+	if ($magic) $fromwar=split("\|",$magic); else $fromwar=split("\|",$from["war"]);
+	if ($answer) $from["time_speed"]=time()+$fromwar[3];	// время для отдыха
+	$hit=$fromwar[0];
+	$b=0;
+	$loc1=split("\|",$locations[$loc]);
+	if (!isset($game["loc"][$loc][$toid]) && $fromwar[4]) {	// если ranged и не магией, то ищем в соседних локациях
+		for ($i=3;$i<count($loc1);$i+=2) if (isset($game["loc"][$loc1[$i]][$toid])) {$b=1; $to=&$game["loc"][$loc1[$i]][$toid]; $hit-=10; if ($hit<0) $hit=0; break;}	//нашли, штраф к меткости
+		}
+	if (!$b && !isset($game["loc"][$loc][$toid])) {addjournal($fromid,"Цель недоступна"); return;}
+	$to=&$game["loc"][$loc][$toid];
+	if ($to["ghost"]) return;
+//
+	$klan_id1=0;
+	$klan_id2=0;
+	if ( substr($fromid,0,5)=='user.' && substr($toid,0,5)=='user.' ){
+
+		if ( isset($from["klan_i"]) && isset($to["klan_i"]) ){
+			$klan_id1=split("\|",$from["klan_i"]);
+			$klan_id1=$klan_id1[0];
+			$klan_id2=split("\|",$to["klan_i"]);
+			$klan_id2=$klan_id2[0];
+		}
+	}
+//
+	$towar=split("\|",$to["war"]);
+
+if ($magic) {
+	$uklon 	= $towar[9];	// вероятность уклониться 0..100%
+	$parring 	= $towar[10];	// вероятность уменьшить урон на $shield
+	$shield	= $towar[11];
+} else {
+	$uklon 	= $towar[6];
+	$parring 	= $towar[7];
+	$shield	= $towar[8];
+	}
+
+	// если напали на хорошего (не крим и не атакует вас), кроме животных вне охраняемой зоны (для охоты), то становимся кримами
+	$my_us=0;
+	if ($klan_id1==$klan_id2) $my_us=1;
+	if ($loc1[1]) $my_us=1;
+	$crim=$to["crim"] || substr($toid,0,9)=='npc.crim.' || (substr($toid,0,11)=='npc.animal.' && !$loc1[1]);
+	if (!$crim && $to["attack"]!=$fromid && $my_us ){
+		if ($loc1[1]=="1") { $time_crim = 30*60; docrim($fromid);}
+		else if ( substr($toid,0,4)=='npc.' )    { $time_crim = 30*60; docrim($fromid);}
+		else if ( $to["lag"]==$from["lag"] )     { $time_crim = 10*60; docrim($fromid);}
+		else if ( $from["lag"]=="0" )              { $time_crim = 20*60; docrim($fromid);}
+		else if ( $to["lag"]=="0" )                { $time_crim = 20*60; docrim($fromid);}
+		else if ( $to["lag"]=="1" && $loc1[1]=="1" ) { $time_crim = 20*60; docrim($fromid);}
+		else if ( $to["lag"]=="2" && $loc1[1]=="2" ) { $time_crim = 20*60; docrim($fromid);}
+	}
+
+	// проверим, а есть ли стрелы или что там нужно...
+	$needok=1;
+	if ($fromwar[14]) {
+		if (isset($from["items"][$fromwar[14]]))
+		{
+			// тратим 1 патрон
+			$item=split("\|",$from["items"][$fromwar[14]]);
+			$item[1]=$item[1]-1;
+			if ($item[1]>=1) 
+			{
+				$from["items"][$fromwar[14]]=implode("|",$item);
+				}else {	// патроны кончились, заново расчет параметров
+					unset($from["items"][$fromwar[14]]);
+					unset($from["equip"]["arm"]);	// убираем с рук
+					calcparam($fromid);
+					}
+			} else $needok=0;
+		}
+		
+	if ($needok) {
+//////////////new
+			$damage=rand($fromwar[1],$fromwar[2]);
+			$mest='';
+				if (!isset($apl) || $apl==0) $apl=rand(1,5);
+				if ($apl=="1") { $mest=" в голову"; $hit=$hit/100*30; $damage=$damage/100*150; }
+				if ($apl=="2") { $mest=" в пр.руку"; $hit=$hit/100*50; $shield=$shield/100*70;}
+				if ($apl=="3") { $mest=" в л.руку";  $hit=$hit/100*50; $parring=$parring/100*60;}
+				if ($apl=="4")   $mest=" в тело";
+				if ($apl=="5") { $mest=" в ноги"; $hit=$hit/100*60; $uklon=$uklon/100*50; }
+$hit=round($hit);
+$damage=round($damage);
+$parring=round($parring);
+$uklon=round($uklon);
+//////////////end new
+		// проверим, попали ли
+		if (rand(0,100)<=$hit) {
+			// урон
+			//$damage=rand($fromwar[1],$fromwar[2]);
+			// уклон
+			if (rand(0,100)>$uklon) {
+				// щит
+				if ($parring && $shield) if (rand(0,100)<=$parring) {if (!$magic) {$damage-=$shield; addjournalall($loc,$to["title"]." парировал щитом");} else {$damage-=$damage*$shield/100; addjournalall($loc,$to["title"]." сопротивляется магии");}}
+				// броня
+				if (!$magic && $towar[5]) $damage-=$towar[5];	// есть броня, гасим на armor, но не для магии
+				if ($damage<0) $damage=0;
+				if ($to["god"]) $damage=0;	// режим БОГА
+				// наносим урон
+				$to["life"]-=$damage;
+				if ($to["life"]<0) $to["life"]=0;
+				addjournal($fromid,"Вы нанесли ".$to["title"]." урон ".$fromwar[12]." ".$damage.$mest);
+				addjournal($toid,$from["title"]." нанес вам урон ".$fromwar[12]." ".$damage.$mest);
+				addjournalall($loc,$from["title"]." нанес ".$to["title"]." урон ".$fromwar[12]." ".$damage.$mest,$fromid,$toid);
+
+				// если убили, добавим труп
+				if ($to["life"]<1) {
+					eval(implode('',file("f_kill.dat")));
+					}
+				} else {addjournal($toid,"Вы уклонились"); addjournalall($loc,$to["title"]." уклонился",$toid);}
+/*modif*/		} else {addjournal($fromid,"Вы промахнулись"); if ($fromid!="npc.tree") addjournalall($loc,$from["title"]." промахнулся",$fromid);}
+		} else addjournal($fromid,"Нет патронов: ".$fromwar[15]);
+
+	// если оба живы, то обороняющийся отвечает (кроме магии)
+	if(isset($game["loc"][$loc][$fromid]) && isset($game["loc"][$loc][$toid]) && $fromid!=$toid) {
+/*modif*/	if (!isset($to["attack"])) if ($toid!="npc.tree") $to["attack"]=$fromid;
+		if ($answer && !$magic) { $apl=4; attack($loc,$toid,$fromid,0,0);}
+		}

@@ -1,0 +1,58 @@
+// диалог повышения скилла или аттрибута на 1
+eval(implode('',file("skills.dat")));
+
+					$skills=split("\|",$player["skills"]);
+if ( !isset($skills[22]) ) $skills[22]=0;
+if ( !isset($skills[23]) ) $skills[23]=0;
+$player["skills"]=implode("|",$skills);
+					// проверим, есть ли очки опыта
+					if ($skills[4]<1) msg("<p>Недостаточно очков опыта");
+					// проверим минимальный и макс. уровень
+					if (!$dialog[3]) $dialog[3]=0;
+					if (!$dialog[4]) $dialog[4]=10;
+					if ($skills[$arr_skills[$dialog[1]]]<$dialog[3]) msg("<p>Вы должны иметь уровень навыка не ниже ".$dialog[3]);
+					if ($skills[$arr_skills[$dialog[1]]]>$dialog[4]) msg("<p>Вы и так достаточно опытны, я учу только до уровня ".$dialog[4]);
+
+					if ($dialog[1]=='str' || $dialog[1]=='dex' || $dialog[1]=='int') {
+						if ($skills[$arr_skills[$dialog[1]]]+1>$points_limit_attr_one) msg("<p>Невозможно повысить, т.к. аттрибут уже на максимальном уровне ".$points_limit_attr_one);
+						if ($skilldown && $skills[$arr_skills[$skilldown]]-1<1) msg("<p>Невозможно понизить, т.к. аттрибут уже на минимальном уровне 1, выберите другой");
+						if (!$skilldown) if ($skills[0]+$skills[1]+$skills[2]+1>$points_limit_attr) {
+							$stmp.= "<p>Превышен предел суммы очков (".$points_limit_attr.") для аттрибутов, выберите что уменьшить: ";
+							if ($dialog[1]!='str') $stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&skilldown=str\">Сила: ".$skills[0]."</a>";
+							if ($dialog[1]!='dex') $stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&skilldown=dex\">Ловкость: ".$skills[1]."</a>";
+							if ($dialog[1]!='int') $stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&skilldown=int\">Интеллект: ".$skills[2]."</a>";
+							msg($stmp);
+							}
+						} else {	//НАВЫКИ
+							if ($skills[$arr_skills[$dialog[1]]]+1>$points_limit_skills_one) msg("<p>Невозможно повысить, т.к. навык уже на максимальном уровне ".$points_limit_skills_one);
+							if ($skilldown && $skills[$arr_skills[$skilldown]]-1<0) msg("<p>Невозможно понизить, т.к. навык уже на минимальном уровне 0, выберите другой");
+							$sum=1;	// т.к. собираемся добавить
+							foreach (array_keys($arr_skills) as $i) if ($i!='str' && $i!='dex' && $i!='int') $sum+=$skills[$arr_skills[$i]];
+							if (!$skilldown) if ($sum+1>$points_limit_skills) {
+								$stmp.= "<p>Превышен предел суммы очков (".$points_limit_skills.") для навыков, выберите что уменьшить: ";
+								foreach (array_keys($arr_skills) as $i) if ($i!='str' && $i!='dex' && $i!='int') $stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&skilldown=$i\">".$arr_title[$i].": ".$skills[$arr_skills[$i]]."</a>";
+								msg($stmp);
+								}
+							}
+
+					// проверим, хватит ли денег
+					$b=0;
+				$m_w=split("\|",$player["war"]);
+					if ($player["items"]["item.misc.money"] && $m_w[13]!=5) {
+						$money=split("\|",$player["items"]["item.misc.money"]);
+						$money[1]-=$dialog[2];
+						if ($money[1]>=0) {$b=1; if ($money[1]==0) unset($player["items"]["item.misc.money"]); else $player["items"]["item.misc.money"]=implode("|",$money);}
+						}
+					if ($dialog[2]==0) $b=1;
+				if ($m_w[13]==5) $b=1;
+					if (!$b) msg("<p>У вас недостаточно денег (надо ".$dialog[2]." монет)");
+
+					// повышаем +1
+					$skills[$arr_skills[$dialog[1]]]+=1;
+					if ($skilldown) $skills[$arr_skills[$skilldown]]-=1;
+					$skills[4]-=1;	// очки опыта
+					$player["skills"]=implode("|",$skills);
+					calcparam($login);	// пересчитаем основные параметры
+					$stmp="<p>".$arr_title[$dialog[1]].": +1";
+					if ($skilldown) $stmp.="<br/>".$arr_title[$skilldown].": -1";
+					msg($stmp);

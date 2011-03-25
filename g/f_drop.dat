@@ -1,0 +1,31 @@
+
+if ($drop) {			//linkБросить
+	// $drop=id предмета [$num=кол-во]
+	if ($player["ghost"]) msg("<p>Вы призрак и поэтому не можете ничего передать, поднять или бросить, найдите лекаря или камень воскрешения");
+	if (!isset($player["items"][$drop])) msg("<p>У вас нет этого предмета");
+
+  if (strpos($drop,".imen.")) msg("<p>Вы не можете выбросить именной предмет!");
+
+	// бросаем предмет в локацию
+	$item=split("\|",$player["items"][$drop]);
+	// проверим кол-во
+	$num=intval($num);
+	if ($item[1]>1 && !$num) {		// запросим кол-во
+		$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&drop=$drop&num=$(num)\">ok</a><a href=\"$PHP_SELF?sid=$sid&drop=$drop&num=100000\">все</a>";
+		msg($stmp);
+		}
+	if (!$num || $num<1) $num=1;	// если не указано, то 1 предмет
+	if ($num>$item[1]) $num=$item[1];	// и максимум берем все что есть
+	// удаляем из items игрока и снимаем, если экипирован
+	$item[1]-=$num;
+	if ($item[1]<=0) {unset($player["items"][$drop]); calcparam($login);} else $player["items"][$drop]=implode("|",$item);
+	// добавляем в локацию
+	if (isset($game["loc"][$player["loc"]][$drop])) $itemp=split("\|",$game["loc"][$player["loc"]][$drop]); else {$itemp=$item; $itemp[1]=0;}
+	$itemp[1]+=$num;
+	$game["loc"][$player["loc"]][$drop]=implode("|",$itemp);
+	if (!isset($game["loc_add"][$player["loc"]][$drop])) $game["loc_del"][$player["loc"]][$drop]=time()+$time_objects_destroy;	// таймер удаления (если в локации нет респавна этих предметов)
+	addjournal($login,"Вы бросили ".$num." ".$item[0]."<br/><a href=\"$PHP_SELF?sid=$sid&list=inv\">[предметы]</a>");
+	if ($info[2]=='f') {addjournalall($player["loc"],$player["title"]." бросила ".$num." ".$item[0],$login);}
+	else {addjournalall($player["loc"],$player["title"]." бросил ".$num." ".$item[0],$login);}
+	}
+

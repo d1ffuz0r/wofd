@@ -1,0 +1,51 @@
+if (isset($sp) && isset($raz) && isset($opis) && isset($font) && isset($jur) && isset($age) )
+{
+$nast=split("\|",$player["pd"]);
+if ($font!=0) $font=1;
+if ($menu!=0) $menu=1;
+if ($opis!=0) $opis=1;
+if ($sp<3 || $sp>30) $sp=7;
+if ($jur<3 || $jur>30) $jur=7;
+if ($raz<700 || $raz>1600) $raz=1400;
+$nast[0]=$opis;
+$nast[1]=$sp;
+$nast[2]=$raz;
+$nast[3]=$font;
+//4 на отмену ограничений на скиллы
+$nast[5]=$jur;
+// дата рождения
+if ( !$age ) $age = time();
+$user_date = explode('/',$age);
+if ( checkdate($user_date[1],$user_date[0],$user_date[2]) ){
+	$user_date = mktime(0,0,0,$user_date[1],$user_date[0],$user_date[2]);
+	if ( $user_date<time() ) $nast[6] = $user_date;
+}
+
+
+$player["pd"]=implode("|",$nast);
+msg("Настройки сохранены","Настройки");
+}
+else
+{
+$nast=split("\|",$player["pd"]);
+if ( !isset($nast[0]) ) $opis=1; else $opis=$nast[0];
+if ( !isset($nast[1]) ) $sp=7; else $sp=$nast[1];
+if ( !isset($nast[2]) ) $raz=1400; else $raz=$nast[2];
+if ( !isset($nast[3]) ) $font=1; else $font=$nast[3];
+if ( !isset($nast[5]) ) $jur=7; else $jur=$nast[5];
+$tmpt="Длина списков (3..30)<br/><input name=\"sp\" value=\"$sp\" format=\"*N\" maxlength=\"2\" emptyok=\"false\" /><br/>
+Записей в журнале (3..30)<br/><input name=\"jur\" value=\"$jur\" format=\"*N\" maxlength=\"2\" emptyok=\"false\" /><br/>
+Размер страницы (700..1600)<br/><input name=\"raz\" value=\"$raz\" format=\"*N\" maxlength=\"4\" emptyok=\"false\" /><br/>
+Дата рождения (31/12/2009)<br/><input name=\"age\" value=\"31/12/2009\" maxlength=\"10\"/><br/>
+Описания локаций<br/><select name=\"opis\" value=\"$opis\">
+<option value=\"1\">Вкл.</option>
+<option value=\"0\">Откл.</option>
+</select><br/>
+Мелкий шрифт<br/><select name=\"font\" value=\"$font\">
+<option value=\"1\">Вкл.</option>
+<option value=\"0\">Откл.</option>
+</select><br/>
+<a href=\"$PHP_SELF?sid=$sid&set=1&sp=$(sp)&raz=$(raz)&opis=$(opis)&font=$(font)&jur=$(jur)&age=$(age)\">ok</a>
+";
+msg($tmpt,"Настройки");
+}

@@ -1,0 +1,143 @@
+/*		if ($id)  {	// если указан
+			// повтор
+			$died=split("\|",$game["loc"][$player["loc"]][$take]);
+			// подготовим массив предметов с трупа
+			$items=array();
+			if ($died[2]) {
+				$it=split(",",$died[2]);
+				foreach ($it as $i) if ($i) {
+					$item=split("=",$i);
+					$items[$item[0]]=str_replace(":","|",$item[1]);
+					}
+				}
+			//---
+			if (!isset($items[$id])) msg("<p>Нет такого предмета");
+			$item=split("\|",$items[$id]);
+			// проверим кол-во
+			if ($item[1]>1 && !$num) {		// запросим кол-во
+				$stmp="<p>Укажите количество:\n<br/><input name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take&id=$id&num=$(num)\">Отправить</a>";
+				msg($stmp);
+				}
+			if (!$num || $num<1) $num=1;	// если не указано, то 1 предмет
+			if ($num>$item[1]) $num=$item[1];	// и максимум берем все что есть
+			// удаляем с трупа
+			$item[1]-=$num;
+			if ($item[1]<=0) unset($items[$id]); else $items[$id]=implode("|",$item);
+			// добавляем игроку в items
+			if (isset($player["items"][$id])) $itemp=split("\|",$player["items"][$id]); else {$itemp=$item; $itemp[1]=0;}
+			$itemp[1]+=$num;
+			$player["items"][$id]=implode("|",$itemp);
+			addjournal($login,"Вы взяли ".$num." ".$item[0]);
+			// обновляем все предметы у трупа
+			$it="";
+			foreach(array_keys($items) as $i) $it.=$i."=".str_replace("|",":",$items[$i]).",";
+			$died[2]=$it;
+			$game["loc"][$player["loc"]][$take]=implode("|",$died);
+			$id=0;	// чтобы вывести список оставшихся
+			}
+
+		if (!$id) {		// если не указан конкретный предмет, кот. взять, выведем список
+			// повтор, чтобы после забирания одного предмета вывести список оставшихся
+			$died=split("\|",$game["loc"][$player["loc"]][$take]);
+			// подготовим массив предметов с трупа
+			$items=array();
+			if ($died[2]) {
+				$it=split(",",$died[2]);
+				foreach ($it as $i) if ($i) {
+					$item=split("=",$i);
+					$items[$item[0]]=str_replace(":","|",$item[1]);
+					}
+				}
+			//---
+			if (count($items)>0) {
+				if ($died[1]) $stmp="<p>Брать отсюда предметы будет преступлением!"; else $stmp="<p>Предметы:";
+				$ind=0; $count=0; if(!$start) $start=0;
+				foreach (array_keys($items) as $i) {
+					if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+						$k=split("\|",$items[$i]);
+						if ($k[1]>1) $k=$k[0]." (".$k[1].")"; else $k=$k[0];
+						$stmp.= "\n<br/><anchor>".$k."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+						}
+					$ind++;
+					}
+				if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take\">^ </a>";}
+				if ($start+$count_show<count($items)) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&take=$take&start=".($start+$count_show)."\">+ ".(count($items)-$start-$count_show)."</a>";}
+				$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take&id=$(to)\">Взять</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=$take&look=$(to)\">Инфо</a>";
+				msg($stmp,$died[0]);
+				}else msg("<p>Ничего нет",$died[0]);
+			}*/
+$klan_id=64454;
+if ( isset($player["gild"]) ){
+	$klan_id = split("\|",$player["gild"]);
+	$klan_id = $klan_id[0];
+}
+  if ($id)  {	// если указан
+			// повтор
+			$died=split("\|",$game["loc"][$player["loc"]][$take]);
+			// подготовим массив предметов с трупа
+			$items=array();
+			if ($died[2]) {
+				$it=split(",",$died[2]);
+				foreach ($it as $i) if ($i) {
+					$item=split("=",$i);
+					$items[$item[0]]=str_replace(":","|",$item[1]);
+					}
+				}
+			//---
+			if (!isset($items[$id])) msg("<p>Нет такого предмета");
+			$item=split("\|",$items[$id]);
+			// проверим кол-во
+			$num=intval($num);
+			if ($item[1]>1 && !$num) {		// запросим кол-во
+				$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take&id=$id&num=$(num)\">ok</a><a href=\"$PHP_SELF?sid=$sid&take=$take&id=$id&num=100000\">все</a>";
+				msg($stmp);
+				}
+			if (!$num || $num<1) $num=1;	// если не указано, то 1 предмет
+			if ($num>$item[1]) $num=$item[1];	// и максимум берем все что есть
+			// удаляем с трупа
+			$item[1]-=$num;
+			if ($item[1]<=0) unset($items[$id]); else $items[$id]=implode("|",$item);
+			// добавляем игроку в items
+			if (isset($player["items"][$id])) $itemp=split("\|",$player["items"][$id]); else {$itemp=$item; $itemp[1]=0;}
+			$itemp[1]+=$num;
+			$player["items"][$id]=implode("|",$itemp);
+			addjournal($login,"Вы взяли ".$num." ".$item[0]."<br/><a href=\"$PHP_SELF?sid=$sid&take=$take\">[взять]</a>");
+			// обновляем все предметы у трупа
+			$it="";
+			foreach(array_keys($items) as $i) $it.=$i."=".str_replace("|",":",$items[$i]).",";
+			$died[2]=$it;
+			$game["loc"][$player["loc"]][$take]=implode("|",$died);
+			$id=0;	// чтобы вывести список оставшихся
+			}
+
+		if (!$id) {		// если не указан конкретный предмет, кот. взять, выведем список
+			// повтор, чтобы после забирания одного предмета вывести список оставшихся
+			$died=split("\|",$game["loc"][$player["loc"]][$take]);
+/*mod*/			$nazv="труп (".$player["title"].")";
+			// подготовим массив предметов с трупа
+			$items=array();
+			if ($died[2]) {
+				$it=split(",",$died[2]);
+				foreach ($it as $i) if ($i) {
+					$item=split("=",$i);
+					$items[$item[0]]=str_replace(":","|",$item[1]);
+					}
+				}
+			//---
+			if (count($items)>0) {
+/*mod*/			if ( $died[1] && $died[0]!=$nazv ) if ( ($died[1]-1)!=$klan_id ) $stmp="<p>Брать отсюда предметы будет преступлением!"; else $stmp="<p>Предметы:";
+				$ind=0; $count=0; if(!$start) $start=0;
+				foreach (array_keys($items) as $i) {
+					if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+						$k=split("\|",$items[$i]);
+						if ($k[1]>1) $k=$k[0]." (".$k[1].")"; else $k=$k[0];
+						$stmp.= "\n<br/><anchor>".$k."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+						}
+					$ind++;
+					}
+				if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take\">^ </a>";}
+				if ($start+$count_show<count($items)) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&take=$take&start=".($start+$count_show)."\">+ ".(count($items)-$start-$count_show)."</a>";}
+				$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<br/><a href=\"$PHP_SELF?sid=$sid&take=$take&id=$(to)\">Взять</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=$take&look=$(to)\">Инфо</a>";
+				msg($stmp,$died[0]);
+				}else msg("<p>Ничего нет",$died[0]);
+			}

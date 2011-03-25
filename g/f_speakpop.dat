@@ -1,0 +1,9 @@
+$url="http://www.compulenta.ru/news/export-1.txt";
+$fd=implode('',file($url));
+$fd=str_replace("<pre>","",$fd);
+$fd=str_replace("</pre>","",$fd);
+$in=split("\n",$fd);
+$i=rand(0,count($in)-1);
+$in1=split("	",$in[$i]);
+$in1=$in1[2];
+msg($in1."<br/>ƒур-р-рак, дур-р-рак!");

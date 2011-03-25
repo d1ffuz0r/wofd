@@ -1,0 +1,23 @@
+// переносим игрока из локации loc.offline в его последнюю локацию когда был онлайн
+
+		if (file_exists("loc_offline.dat")) {
+			$loc_offline = implode("",file("loc_offline.dat"));
+			$game["loc"]["loc.offline"] = unserialize($loc_offline);
+			} else $game["loc"]["loc.offline"] = array();
+
+		// добавляем в список Online
+	if (isset($game["loc"]["loc.offline"][$login])) {
+		// добавляем в локацию...
+		$loc=$game["loc"]["loc.offline"][$login]["loc"];
+		$game["loc"][$loc][$login]=$game["loc"]["loc.offline"][$login];
+		$game["players"][$login]=$loc;
+		unset($game["loc"]["loc.offline"][$login]);
+		// всем в локации в журнал, что пришел такой-то
+		if ($info[2]=='f') {addjournalall($loc,"Появилась ".$game["loc"][$loc][$login]["title"],$login);}
+		else {addjournalall($loc,"Появился ".$game["loc"][$loc][$login]["title"],$login);}
+		// очищаем свой журнал
+		//$game["loc"][$loc][$login]["journal"]="";
+		if ($game["loc"][$loc][$login]["crim"]) {$game["loc"][$loc][$login]["time_crim"]=time()+$game["loc"][$loc][$login]["time_crim"]-$game["loc"][$loc][$login]["time"];}	// остаток времени сколько быть кримом
+		$game["loc"][$loc][$login]["time_regenerate"]=time();	// чтобы начать с тем же уровнем здоровья
+		unset($game["loc"][$loc][$login]["look"]);
+	}

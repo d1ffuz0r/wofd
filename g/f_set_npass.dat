@@ -1,0 +1,16 @@
+//новый пароль
+if (isset($npass) && isset($opass)){
+	$i_dat=split("\|",$player["info"]);
+	if ($i_dat[0]!=$opass) msg("Неверный пароль","Смена пароля");
+	if (ereg("[^a-zA-Z0-9_]+",$npass)) msg("Только лат. буквы и цифры в пароле","Смена пароля");
+	if ( strlen($npass)>25 ) msg("Длина нового пароля не должна превышать 25 символов","Смена пароля");
+	$i_dat[0]=$npass;
+	$player["info"]=implode("|",$i_dat);
+	msg("<p align=\"center\">Ваш новый пароль:<br/><b>$npass</b><br/>Пожалуйста, авторизируйтесь заново<br/><a href=\"$PHP_SELF?site=connect\">[войти]</a>","Успешно",0,'none');
+}else{
+	$tmpt="<p align=\"center\">[старый пароль]<br/><input name=\"opass\" maxlength=\"30\" size=\"10\"/><br/>
+		[новый пароль]<br/><input name=\"npass\" maxlength=\"25\" size=\"10\"/><br/>
+		<a href=\"$PHP_SELF?sid=$sid&npass=$(npass)&opass=$(opass)\">[сменить]</a>
+		";
+	msg($tmpt,"Смена пароля");
+}

@@ -1,0 +1,75 @@
+/*
+	доп. к чистому миру
+	$hit|$dam_min|$dam_max|$speed|$ranged|$armor|$uklon|$parring|$shield|$magic_uklon|$magic_parring|$magic_shield|$weaponby|$exp|$need|$needtitle
+	70|50|70|10|0|10|10|0|10|10|40|4|осколком скалы|200||
+	$locations
+	"item.crystal.adamant"=>"алмаз|1|300"
+	item.crystal.adamant=алмаз:1:500
+*/
+// монстры в подземелье
+$temp_mon = array(
+	"b0"=>array(
+		"count"=>"3",
+		"title"=>"Агатуль",
+		"life_max"=>"300",
+		"war"=>"85|50|70|8|0|10|20|0|0|20|20|5|энергией|250||",
+		"respawn"=>"600|1200",
+		"move"=>"3|20|180",
+	),
+	"b1"=>array(
+		"count"=>"1",
+		"title"=>"Зеленый дракон",
+		"life_max"=>"400",
+		"war"=>"85|60|90|9|0|12|1|0|0|30|20|5|огнем|300||",
+		"items"=>array("item.misc.pepel"=>"пепел|0|999"),
+		"osvej"=>"item.crystal.h0=сердце зеленого дракона:1:400",
+		"respawn"=>"600|1200",
+		"move"=>"3|20|180",
+	),
+	"b2"=>array(
+		"count"=>"1",
+		"title"=>"Синий дракон",
+		"life_max"=>"500",
+		"war"=>"90|50|110|8|0|15|1|0|0|40|10|8|холодом|400||",
+		"items"=>array("item.misc.pepel"=>"пепел|0|1999"),
+		"osvej"=>"item.crystal.h1=сердце синего дракона:1:500",
+		"respawn"=>"600|1200",
+		"move"=>"3|20|180",
+	),
+	"b3"=>array(
+		"count"=>"5",
+		"title"=>"Кристальный джин",
+		"life_max"=>"300",
+		"war"=>"80|40|70|8|0|10|10|0|0|50|50|3|светом|200||",
+		"items"=>array("item.crystal.lampa"=>"лампа|250|1"),
+		"equip"=>array("arm"=>"item.crystal.lampa"),
+		"respawn"=>"600|1200",
+		"move"=>"3|20|180",
+	),
+	"b4"=>array(
+		"count"=>"5",
+		"title"=>"Назгул",
+		"life_max"=>"300",
+		"war"=>"95|40|99|8|0|8|5|60|5|0|0|0|посохом Назгула|200||",
+		"items"=>array("item.armor.shield.nazg"=>"щит Назгула|1|80|5", "item.weapon.nazg"=>"посох Назгула|1|30|10|21|0|9|посохом Назгула||",),
+		"equip"=>array("arm"=>"item.weapon.nazg","shield"=>"item.armor.shield.nazg"),
+		"respawn"=>"600|1200",
+		"move"=>"3|20|180",
+	),
+);
+// готовим территорию
+$temp_ter = array();
+foreach (array_keys($locations) as $i) if ( substr($i,0,6)=='loc.L.' && !isset($game["loc"][$i]) ) $temp_ter[] = $i;
+// готовим нпс
+foreach (array_keys($temp_mon) as $i){
+	$temp_cur = $temp_mon[$i];
+	$temp_cur["life"] = $temp_cur["life_max"];
+	$temp_n = $temp_cur["count"];
+	unset($temp_cur["count"]);
+	for ($j=0;$j<$temp_n;$j++){
+		$temp_name = "npc.crim.".$i.$j;
+		$temp_loc = $temp_ter[rand(0,count($temp_ter)-1)];
+		$game["loc"][$temp_loc][$temp_name] = $temp_cur;
+		$game["loc"][$temp_loc][$temp_name]["respawn"] = $temp_loc."|".$temp_cur["respawn"];
+	}
+}

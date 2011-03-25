@@ -1,0 +1,148 @@
+if (ereg("сеньор", $player["gild"]) or ereg("зам. главы", $player["gild"])) {
+$gg=explode("|", $player['gild']);
+$nameofgild=$gg[1];
+
+ if ($gild=="menu") {
+     $msg.="<a href=\"$PHP_SELF?sid=$sid&gild=listgild\">".$x[50]."</a><br/>\n";
+     $msg.="<a href=\"$PHP_SELF?sid=$sid&gild=addplayer\">".$x[51]."</a><br/>\n";
+     $msg.="<a href=\"$PHP_SELF?sid=$sid&gild=changeplayerstat\">".$x[52]."</a><br/>\n";
+     $msg.="<a href=\"$PHP_SELF?sid=$sid&gild=del\">".$x[54]."</a>";
+};
+
+if ($gild=="listgild") {
+
+        ai();        // обновим список
+
+        if (count($game["players"])>0) {
+                $ind=0;
+                $count=0;
+
+                if ($start<0 || !$start) $start=0;
+                $online=array_keys($game["players"]);
+                foreach($online as $i) {
+
+        $gi=explode("|", $game['loc'][$game['players'][$i]][$i]['gild']);
+             if ($gi[1]=="$nameofgild") {
+                        if ($ind>=$start) {
+                        $stmp.="\n<br/>".$game["loc"][$game["players"][$i]][$i]["title"]."*".$gi[0];
+                        $count++;
+                        if ($count>=$count_show) break;        // след. страница, если слишком много человек или предметов
+                        }
+                        $ind++;
+                        }
+            }
+                if ($start && $start-$count_show>=0) $stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&gild=listgild&start=".($start-$count_show)."\">[-]</a>";
+                if ($count+$start<count($game["players"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= " <a href=\"$PHP_SELF?sid=$sid&gild=listgild&start=".($count+$start)."\">[+]</a>";}
+                } else $stmp.="\n<br/>".$x[56]."";
+
+        $msg=$stmp;
+
+};
+
+
+if ($gild=="addplayer") {
+  if (@!$pllogin || @!$stat) {
+  $msg="
+  ".$x[57].":<br/>user.<input type=\"text\" name=\"pllogin\"/><br/>\n
+  ".$x[58].":
+  <select name=\"stat\" value=\"newbi\">
+    <option value=\"newbi\">".$x[59]."</option>
+    <option value=\"leten\">".$x[60]."</option>
+    <option value=\"kap\">".$x[61]."</option>
+    <option value=\"kazn\">".$x[62]."</option>
+    <option value=\"help\">".$x[63]."</option>
+    </select><br/>
+    <a href=\"$PHP_SELF?sid=$sid&gild=addplayer&pllogin=$(pllogin)&stat=$(stat)\">".$x[64]."</a>
+  ";
+ }else {
+ $pllogin="user.$pllogin";
+  if (ereg($stat, $player['gild_dol'])) msg($x[65]);
+  if (!isset($game['loc'][$game[players][$pllogin]][$pllogin])) msg($x[67]." $pllogin ".$x[68]);
+  if (isset($game['loc'][$game[players][$pllogin]][$pllogin]['gild'])) msg($x[69]);
+
+ if ($stat=="newbi") $sstat=$x[59];
+ if ($stat=="leten") $sstat=$x[60];
+ if ($stat=="kap"  ) $sstat=$x[61];
+ if ($stat=="kazn"){ $sstat=$x[62]; $player["gild_dol"]="$stat|";    };
+ if ($stat=="help"){ $sstat=$x[66];  $player["gild_dol"]="$stat|";  };
+
+
+  $gm=&$game['loc'][$game[players][$pllogin]][$pllogin];
+  $gm['gild']="$sstat|$nameofgild";
+  $msg.="Сделано";
+ };
+};
+
+if ($gild=="changeplayerstat"){
+ if (@!$st or @!$usrlog)
+  $msg="Лоигн игрока:<br/>user.<input type=\"text\" name=\"usrlog\"/><br/>
+    <a href=\"$PHP_SELF?sid=$sid&gild=changeplayerstat&usrlog=$(usrlog)&st=2\">[дальше]</a>
+    ";
+
+    if ($st=="2" && $usrlog) {
+    $msg="Логин игрока: user.$usrlog<br/>";
+    $usrlog="user.".$usrlog;
+    $ad=explode("|", $game['loc'][$game[players][$usrlog]][$usrlog]['gild']);
+
+
+       if ($ad[0]==$x[59]) $xz="newbi";
+ if ($ad[0]==$x[60]) $xz="leten";
+ if ($ad[0]==$x[61]) $xz="kap";
+ if ($ad[0]==$x[62]) $xz="kazn";
+ if ($ad[0]==$x[66]) $xz="help";
+
+
+
+      $msg.="
+         Должность:
+  <select name=\"stat\" value=\"$xz\">
+    <option value=\"newbi\">$x[59]</option>
+    <option value=\"leten\">$x[60]</option>
+    <option value=\"kap\">$x[61]</option>
+    <option value=\"kazn\">$x[62]</option>
+    <option value=\"help\">$x[63]</option>
+
+  </select>
+        <a href=\"$PHP_SELF?sid=$sid&gild=changeplayerstat&usrlog=$usrlog&st=3&stat=$(stat)&st_bef=$xz\">".$x[70]."</a>
+      ";
+    };
+    if ($st==3 && $usrlog && $stat) {
+    // был ли он казн или хэлпером
+    if ($st_bef=="kazn") {
+    $palyer[gild_dol]=str_replace("kazn|", "", $player[gild_dol]);
+    };
+    if ($st_bef=="help") {
+    $palyer[gild_dol]=str_replace("help|", "", $player[gild_dol]);
+    };
+
+
+ if ($stat=="newbi") $sstat=$x[59];
+ if ($stat=="leten") $sstat=$x[60];
+ if ($stat=="kap"  ) $sstat=$x[61];
+ if ($stat=="kazn"){ $sstat=$x[62]; $player["gild_dol"]="$stat|";    };
+ if ($stat=="help"){ $sstat=$x[66];  $player["gild_dol"]="$stat|";  };
+
+
+ // а теперь позаботимся о самом люзере
+ addjournal($usrlog, $x[71]." $sstat.");
+ $game['loc'][$game[players][$usrlog]][$usrlog]['gild']="$sstat|$nameofgild";
+ $msg.=$x[72];
+    };
+};
+
+if ($gild=="del") {
+if (!$usr_del){
+            $msg="Если ввести свой ник, то клан останется без главы!<br/>".$x[78].":<br/>user.<input type=\"text\" name=\"usr_del\"/><br/>
+            <a href=\"$PHP_SELF?sid=$sid&gild=del&usr_del=$(usr_del)\">Убрать!</a>
+            ";
+        } else {
+        $usr_del="user.$usr_del";
+        if (ereg($gg[1], $game['loc'][$game['players'][$usr_del]][$usr_del]['gild'])){
+          unset($game['loc'][$game['players'][$usr_del]][$usr_del]['gild']);
+          $msg="Убрали!";
+           };
+          };
+        };
+msg($msg, $x[81]);
+
+}

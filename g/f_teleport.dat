@@ -1,0 +1,27 @@
+$port=$game["loc"][$player["loc"]][$take];
+$portt=explode("|", $port); //title|кто_вызвал|локация_куда
+
+               $loc=$portt[2];
+
+                 if (substr($loc, 0, 4)!="loc.")  $loc="loc.".$loc;
+                if ($loc!=$player['loc']){
+
+                     $loc_old=$player['loc'];
+
+                if (!isset($locations[$loc])) msg("<p>Нет локации ".$loc);
+
+                $game["loc"][$loc][$login]=$game["loc"][$player["loc"]][$login];
+                unset($game["loc"][$player["loc"]][$login]);
+
+                                            
+
+                unset($player);
+                $player=&$game["loc"][$loc][$login];
+                $player["loc"]=$loc;
+                $game["players"][$login]=$loc;
+                }
+              msg("Вы переместились в ".str_replace("Портал в ", '', $portt[0]));
+
+if ($portt[1]==$login) {
+            unset($game["loc"][$loc_old][$take]);
+        };

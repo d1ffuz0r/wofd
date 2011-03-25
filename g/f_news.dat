@@ -1,0 +1,11 @@
+$file="news1.dat";
+$text=implode("",file($file));
+if (!isset($num)) $num=1;
+$start=($num-1)*700;
+$text1=substr($text,$start,700);
+$text1=str_replace("\n","<br/>",$text1);
+$stmp="<p>";
+$stmp.=$text1;
+$num=$num+1;
+if ( (strlen($text)-$start)>700 ) $stmp.="</p><p align=\"center\"><a href=\"$PHP_SELF?sid=$sid&new3=1&num=$num\">[далее]</a>";
+msg($stmp,"Новости");

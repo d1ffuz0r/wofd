@@ -1,0 +1,18 @@
+
+if ($look) {			//linkСмотреть
+	if ($look==1 || $look==2) {		// тек. локация
+	if ($look==1 && isset($player["pd"])) { $pd=split("\|",$player["pd"]); $page_desc = $pd[0];} else $page_desc =1;
+	}else	
+	if (substr($look,0,5)=='item.') eval(implode('',file("f_lookitem.dat")));
+	else
+	if (substr($look,0,5)=='user.') eval(implode('',file("f_lookuser.dat")));
+	else 
+	if (substr($look,0,4)=='npc.')  eval(implode('',file("f_looknpc.dat")));
+	else 
+	if (substr($look,0,6)=='magic.')  eval(implode('',file("f_lookmagic.dat")));
+	else {	// скиллы, магия и т.д.
+		eval(implode('',file("f_lookdata.dat")));
+		if (!isset($arr_look[$look])) $stmp.="Описание недоступно"; else $stmp.="<p>".$arr_look[$look];
+		}
+	if (!$page_desc) msg($stmp,"Описание");
+	}

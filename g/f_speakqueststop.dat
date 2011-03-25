@@ -1,0 +1,149 @@
+$q_id=$dialog[1]; //id квеста
+eval(implode('',file("f_questdb.dat")));
+if ($player['q'][$q_id]) msg("Вы уже прошли этот квест!"); else {
+if (!$player['items']['item.note.imen.q'.$q_id.'']) msg("Вы не брали этого квеста, и окончить его не можете!");
+else {
+if (chitm($q_id)) {
+unset($player['items']['item.note.imen.q'.$q_id.'']); //убиваем записку
+delitm($q_id); //убиваем предметы
+$sss=explode(":",$qq[$q_id]['stop']);
+$player['q'][$q_id]=true;
+if ($sss[0]=="item"){
+//item:item.rod.new=Усовершенствованная удочка|1|100|10000|2
+$ex=explode("=", $sss[1]);
+$player['items'][$ex[0]]=$ex[1];
+$exx=explode("|", $ex[1]);
+$priz="Вы получили ".$exx[0]."";
+};
+
+if ($sss[0]=="skill") {
+$arr_skills=array(
+"str"=>0,
+"dex"=>1,
+"int"=>2,
+"meditation"=>5,
+"steal"=>6,
+"animaltaming"=>7,
+"hand"=>8,
+"coldweapon"=>9,
+"ranged"=>10,
+"parring"=>11,
+"uklon"=>12,
+"magic"=>13,
+"magic_resist"=>14,
+"magic_uklon"=>15,
+"regeneration"=>16,
+"hiding"=>17,
+"look"=>18,
+"steallook"=>19,
+"animallore"=>20,
+"spirit"=>21,
+"derevo"=>22,
+"kamen"=>23,
+"ingen"=>24,
+"mask"=>25,
+);
+
+$arr_title=array(
+"str"=>"Сила",
+"dex"=>"Ловкость",
+"int"=>"Интеллект",
+"meditation"=>"Медитация",
+"steal"=>"Кража",
+"animaltaming"=>"Прир.животных",
+"ingen"=>"Кузнец",
+"hand"=>"Рукопашная",
+"coldweapon"=>"Холодн.оружие",
+"ranged"=>"Стрельба",
+"parring"=>"Парирование",
+"uklon"=>"Уклон",
+"magic"=>"Магия",
+"magic_resist"=>"Сопр.магии",
+"magic_uklon"=>"Уклон от магии",
+"regeneration"=>"Регенерация",
+"hiding"=>"Скрытность",
+"look"=>"Осторожность",
+"steallook"=>"Подглядывание",
+"animallore"=>"Изуч.животных",
+"spirit"=>"Спиритизм",
+"derevo"=>"Дровосек",
+"kamen"=>"Камнетес",
+"mask"=>"Маскировщик",
+);
+
+$plsk=explode("|", $player['skills']);
+$plsk[$arr_skills[$sss[1]]]=$plsk[$arr_skills[$sss[1]]]+$sss[2];
+$player['skills']=implode("|", $plsk);
+
+$priz="Ваш навык ".$arr_title[$sss[1]]." поднялся на ".$sss[2]."!";
+};
+
+   msg("Вы успешно сдали все предметы! ".$priz."");
+
+} else msg("Вы не собрали всех предметов!");
+      }
+};
+
+function delitm($d) {
+        global $qq;
+        global $player;
+        global $game;
+         $ex=explode("|", $qq[$d]['items']);
+
+         $r=true;
+         foreach ($ex as $i) {
+                 $x=explode(":", $i);
+ if (!ereg("\*",$x[0])) { // не используем регулярку
+$xx=explode("|", $player['items'][$x[0]]);
+                 $xx[1]=$xx[1]-$x[1];
+                 if ($xx[1]<=0) unset($player['items'][$x[0]]); else
+                 $player['items'][$x[0]]=implode("|",$xx);
+
+} else {
+$x[0]=str_replace("*", "", $x[0]);
+foreach (array_keys($player['items']) as $j) {
+if (preg_match("/$x[0]+[a-z_A-Z.0-9]/i", $j)) { //нашли предмет по регулярке, проверим количество
+if (!$exests[$j]) {
+$exests[$j]=1;
+unset($player['items'][$j]);
+};};
+if (count($exests)>$x[1]) break;
+};};};
+                 return $r;
+        }
+function chitm($d) {
+        global $qq;
+        global $player;
+        global $game;
+         $ex=explode("|", $qq[$d]['items']);
+         //print_r($ex);
+         $r=true;
+         foreach ($ex as $i) {
+                 $x=explode(":", $i);
+                 //print_r($x);
+		 if (!ereg("\*",$x[0])) { // не используем регулярку
+                 if ($player['items'][$x[0]]) {
+                 $xx=explode("|", $player['items'][$x[0]]);
+                 //print_r($xx);
+                 if ($x[1]>$xx[1]) { $r=false; break;};
+                 } else {$r=false; break;};
+} else {
+$x[0]=str_replace("*", "", trim($x[0]));
+//echo $x[0];
+foreach (array_keys($player['items']) as $j) {
+if (preg_match("/$x[0]+[a-z_A-Z.0-9]/i", $j)) { //нашли предмет по регулярке, проверим количество
+if (!$exests[$j]) {
+$exests[$j]=1;
+
+};
+#echo "xxx";
+};
+};
+#print_r($exests);
+//echo $x[1];
+if (count($exests)<=$x[1]) $r=false;  //не нашли нужного количества
+};
+		};
+		//if (is_array($exests) && count($exests)<$ex[1]) $r=falce
+                 return $r;
+        };

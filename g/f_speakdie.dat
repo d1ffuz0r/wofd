@@ -1,0 +1,23 @@
+$plg=$player["lag"];
+$player["lag"]="0";
+$player["crim"]="1";
+$tmn=0;
+if ( isset($player["time_crim"]) && $player["time_crim"]>time() ) $tmn=$player["time_crim"]-time();
+$player["time_crim"]=$tmn+time()+2*60;
+
+$k_s=0;
+foreach (array_keys($player["items"]) as $i) if (strpos($i,".imen.p.")) { unset($player["items"][$i]); $k_s=1;}
+foreach (array_keys($player["bank"]) as $i) if (strpos($i,".imen.p.")) { unset($player["bank"][$i]); $k_s=1;}
+
+if ($plg!="0" && $plg!="1" && $plg!="2"){
+$vt1 = unserialize(implode("",file("klan.dat")));
+
+unset($vt1[$plg][$login]);
+if ($k_s) unset($vt1[$plg]);
+
+$fl1 = fopen ("klan.dat", "w");
+fputs($fl1,serialize($vt1));
+fclose ($fl1);
+}
+
+msg("Вы исключены из клана");

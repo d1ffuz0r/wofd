@@ -1,0 +1,52 @@
+
+		// $from=id|bank у кого
+
+		// получаем предмет для описания
+		if (!$from) if (!isset($game["loc"][$player["loc"]][$look])) msg("<p>Не на что смотреть"); else $item=$game["loc"][$player["loc"]][$look];
+		if ($from=='bank') if (!isset($player["bank"][$look])) msg("<p>Не на что смотреть"); else $item=$player["bank"][$look];
+		if ($from && $from!='bank') {	// нпс
+			if (!isset($game["loc"][$player["loc"]][$from])) msg("<p>Нет существа, у которого предмет");
+			if ($game["loc"][$player["loc"]][$from]["trader"]) {
+				if (!isset($game["loc"][$player["loc"]][$from]["bank"][$look])) msg("<p>У торговца нет этого предмета");
+				$item=split("=",$game["loc"][$player["loc"]][$from]["bank"][$look]);
+				$item=$item[1];
+				}else if (!isset($game["loc"][$player["loc"]][$from]["items"][$look])) msg("<p>У существа нет этого предмета"); else $item=$game["loc"][$player["loc"]][$from]["items"][$look];
+			}
+
+		$item=split("\|",$item);
+		$stmp="<p>".$item[0];
+
+		if (substr($look,0,15)=='item.stand.died') $stmp.="<br/>труп, можно разделать ножом";
+		if (substr($look,0,10)=='item.stand' && substr($look,0,15)!='item.stand.died') $stmp.="<br/>".$item[1];
+		if (substr($look,0,15)=='item.recallrune') $stmp.="<br/>руна для телепортации";
+		if (substr($look,0,10)=='item.armor') $stmp.="<br/>Броня +".$item[3];
+		if (substr($look,0,9)=='item.note') $stmp.="<br/>листок бумаги с текстом";
+		if (substr($look,0,11)=='item.scroll') $stmp.="<br/>свиток заклинания, не требует наличия магических реагентов, исчезает после прочтения<br/><a href=\"$PHP_SELF?sid=$sid&look=magic.".substr($look,11)."\">Описание</a>";
+		if (substr($look,0,9)=='item.rune') $stmp.="<br/>руна заклинания, не требует наличия магических реагентов, не исчезает после прочтения<br/><a href=\"$PHP_SELF?sid=$sid&look=magic.".substr($look,9)."\">Описание</a>";
+		if (substr($look,0,9)=='item.food') $stmp.="<br/>пища восстанавливает здоровье и иногда ману<br/>Здоровье +".$item[3]."<br/>Мана +".$item[4];
+		if (substr($look,0,12)=='item.weapon.') {
+			$stmp.="<br/>оружие";
+			if (substr($look,0,18)=='item.weapon.ranged') $stmp.=" стрелковое/метательное";
+			if (substr($look,0,17)=='item.weapon.knife') $stmp.="<br/>подходит для разделки трупов";
+			$stmp.="<br/>Урон: ".$item[3]."-".$item[4]."<br/><a href=\"$PHP_SELF?sid=$sid&look=desc.wstr\">Минимум силы</a>: ".$item[5]."<br/><a href=\"$PHP_SELF?sid=$sid&look=desc.wspeed\">Скорость</a>: ".$item[6];
+			if ($item[8]) $stmp.="<br/>Использует: ".$item[9];
+			
+			}
+		if (substr($look,0,11)=='item.chert.') {
+		$stmp.="<br/>Необходимо:";
+		$stmp.="<br/>- интеллект ".$item[5];
+		$stmp.="<br/>- инженер ".$item[6];
+		if ($item[3]==0){
+		$stmp.="<br/>- дерево ".$item[14];
+		$stmp.="<br/>- камень ".$item[15];
+		}
+		if ($item[3]==1){
+		$stmp.="<br/>- дерево ".$item[8];
+		$stmp.="<br/>- камень ".$item[9];
+		}
+		$skills=split("\|",$player["skills"]);
+		$ver=round($skills[1]/$item[4]*100);
+		if ($item[4]==0) $ver=100;
+		$stmp.="<br/>- вероятность успеха $ver%";
+		}
+		if (substr($look,0,10)!='item.stand') $stmp.="<br/>Цена: ".$item[2];

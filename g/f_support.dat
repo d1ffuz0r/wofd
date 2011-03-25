@@ -1,0 +1,23 @@
+// эта часть время от времени обрабатывает сохраненку - удаляет лишних, делает копию и т.д.
+
+		
+		// делаем копии, приписывая в конец файла текущее время time()
+		$tm=time();
+		if (file_exists("game.dat")) copy("game.dat","game_".$tm.".dat");
+		if (file_exists("loc_offline.dat")) copy("loc_offline.dat","loc_offline_".$tm.".dat");
+		
+
+		if (file_exists("loc_offline.dat")) {
+			$loc_offline = implode("",file("loc_offline.dat"));
+			$game["loc"]["loc.offline"] = unserialize($loc_offline);
+			} else $game["loc"]["loc.offline"] = array();
+		
+		if ($game["loc"]["loc.offline"]) foreach(array_keys($game["loc"]["loc.offline"]) as $i) {
+//			$war=split("\|",$game["loc"]["loc.offline"][$i]["war"]);
+//			if ($war[13]==5 && time()-$game["loc"]["loc.offline"][$i]["time"]>3600*24*7) {unset($game["loc"]["loc.offline"][$i]); $game["all"]=$game["all"]-1;}	// не повысил опыт и не появлялся 24*2 часа
+
+				if (time()-$game["loc"]["loc.offline"][$i]["time"]>3600*24*7) {unset($game["loc"]["loc.offline"][$i]); $game["all"]=$game["all"]-1;}
+
+
+			}
+		$game["lastcopy"]=time();

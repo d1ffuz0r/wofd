@@ -1,0 +1,601 @@
+// использование предметов
+ if ((time()-$player['deystvo'])<=3) {
+                   msg("Вы не можете так часто выполнять действия!");
+         } else {
+		if (!isset($player["items"][$use])) msg("<p>У вас нет этого предмета");
+		if (substr($use,0,12)=='item.weapon.' || substr($use,0,11)=='item.armor.') {	// одеваем/снимаем оружие броню
+			// если в руках нож и есть $to, то освежевание
+			if ($to && substr($use,0,17)=='item.weapon.knife' && $player["equip"] && array_search($use,$player["equip"])) {
+			if (substr($to,0,16)=='item.stand.died.' && isset($game["loc"][$player["loc"]][$to])) {
+				$died=split("\|",$game["loc"][$player["loc"]][$to]);
+				$items=array();
+				if ($died[3]) {
+					if ($died[2]) {	// items
+						$it=split(",",$died[2]);
+						foreach ($it as $i) if ($i) {
+							$item=split("=",$i);
+							$items[$item[0]]=str_replace(":","|",$item[1]);
+							}
+						}
+					$it=split(",",$died[3]);	// osvej
+					foreach ($it as $i) if ($i) {
+						$item=split("=",$i);
+						$id=$item[0];
+						$item=split(":",$item[1]);
+						// добавим предмет трупу
+						if (isset($items[$id])) {
+							$item1=split("\|",$items[$id]);
+							$item[1]+=$item1[1];
+							}
+						$items[$id]=implode("|",$item);
+						}
+					// обновляем все предметы у трупа
+					$died[3]='';	// чтоб больше одного раза не удалось освежевать
+					$it="";
+					foreach(array_keys($items) as $i) $it.=$i."=".str_replace("|",":",$items[$i]).",";
+					$died[2]=$it;
+					$game["loc"][$player["loc"]][$to]=implode("|",$died);
+					addjournal($login,"Вы освежевали ".$died[0]);
+					} else addjournal($login,"На трупе нет трофеев");
+				} else addjournal($login,"Нож можно использоваться для разделки только трупов");
+				}else {
+				if (!$player["equip"] || !array_search($use,$player["equip"])) {	// одеваем
+					if (substr($use,0,12)=='item.weapon.') $player["equip"]["arm"]=$use;
+					if (substr($use,0,15)=='item.armor.body') $player["equip"]["body"]=$use;
+					if (substr($use,0,15)=='item.armor.hand') $player["equip"]["hand"]=$use;
+					if (substr($use,0,14)=='item.armor.leg') $player["equip"]["leg"]=$use;
+					if (substr($use,0,15)=='item.armor.head') $player["equip"]["head"]=$use;
+					if (substr($use,0,17)=='item.armor.shield') $player["equip"]["shield"]=$use;
+					// если берем в руки нож, то просим цель для освежевания
+					if (substr($use,0,17)=='item.weapon.knife') $list='all';
+					} else if ($player["equip"]) unset($player["equip"][array_search($use,$player["equip"])]);
+				calcparam($login);
+				if (!$list) $list='inv';	// только если не взяли нож
+				}
+			} else 
+			if (substr($use,0,9)=='item.note') {
+				$item=split("\|",$player["items"][$use]);
+				msg("<p>".$item[3],$item[0],1);
+			} else 
+			if (substr($use,0,12)=='item.scroll.' || substr($use,0,10)=='item.rune.' ) {	// свитки и руны кастуются ниже как магия, но не требует регов
+				$scroll=$use;
+				if (substr($use,0,12)=='item.scroll.') $use="magic.".substr($use,12); else $use="magic.".substr($use,10);
+				eval(implode('',file("f_magic.dat")));	// загружаем всю магию
+				$magic=split("\|",$arr_magic[$use]);
+				if ($magic[6] && !$to) {$use=$scroll; $list='all'; $scroll=0;}	// чтобы вывести список целей
+			}else 
+			if (substr($use,0,10)=='item.food.' || substr($use,0,12)=='item.bottle.') {
+				if (substr($use,0,17)!='item.bottle.empty') {
+				$item=split("\|",$player["items"][$use]);
+				$life=$item[3];
+				$mana=$item[4];
+				if ($life) {
+					if($player["life"]+$life>$player["life_max"]) $life=$player["life_max"]-$player["life"];
+					$player["life"]+=$life; 
+					addjournal($login,'Жизнь +'.$life);
+					}
+				if ($mana) {
+					if($player["mana"]+$mana>$player["mana_max"]) $mana=$player["mana_max"]-$player["mana"];
+					$player["mana"]+=$mana; 
+					addjournal($login,'Мана +'.$mana);
+					}
+				// удаляем использованный предмет
+				$item[1]-=1;
+				if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+				//добавляем пустую бутылку
+				if (substr($use,0,12)=='item.bottle.') {if (isset($player["items"]["item.bottle.empty"])) {$bottle=split("\|",$player["items"]["item.bottle.empty"]); $bottle[1]+=1; $player["items"]["item.bottle.empty"]=implode("|",$bottle);} else $player["items"]["item.bottle.empty"]="бутылка|1|5|0|0|"; addjournal($login,'Вы получили 1 бутылка');}
+				addjournal($login,'Вы потеряли 1 '.$item[0]);
+				} else addjournal($login,'В бутылке ничего нет');
+			}else 
+			if (substr($use,0,12)=='item.imen.p.')
+			{
+			if (!$to) $list='all';
+				else if ( isset($game["loc"][$player["loc"]][$to]) ) {
+				$klinf=split("\|",$player["items"][$use]);
+				$klinf=$klinf[2];
+					if ( substr($to,0,5)=='user.' && $to!=$login) {
+				$ulag=$game["loc"][$player["loc"]][$to]["lag"];
+$vt1 = unserialize(implode("",file("klan.dat")));
+	if ($ulag=="0" || $ulag=="1" || $ulag=="2") {
+$game["loc"][$player["loc"]][$to]["lag"]=$klinf; addjournal($login,'Вы приняли в клан '.$game["loc"][$player["loc"]][$to]["title"]); addjournal($to,'Вы приняты в клан '.$klinf);
+$vt1[$klinf][$to]="1";
+}
+	else if ($ulag==$klinf) {
+$game["loc"][$player["loc"]][$to]["lag"]="0"; addjournal($login,'Вы исключили из клана '.$game["loc"][$player["loc"]][$to]["title"]); addjournal($to,'Вы исключены из клана '.$klinf);
+unset($vt1[$klinf][$to]);
+}
+$fl1 = fopen ("klan.dat", "w"); fputs($fl1,serialize($vt1)); fclose ($fl1);
+					} else addjournal($login,"В клан можно принимать только игроков");
+				}
+                        }
+                        else 
+                        if (substr($use,0,8)=='item.rod') { //рыбалка
+                       // проверим, стоит ли рядом с водой!
+
+                       $list_loc="loc.sl.1|loc.sl.6|loc.sl.2|loc.sl.3|loc.pristan|loc.port1|loc.port2|loc.pol.97";
+
+                  if (ereg($player['loc'], $list_loc)) {
+                  //item.rod="Название|count|cost";
+               $skills=split("\|",$player["skills"]);
+               $fish=$skills[26];
+               if ($fish<6) {
+                   addjournal($login, "Ваш навык рыболовство слабо развит. Поднимите его уровень как минимум до 6.");
+               } else
+               if (rand(6, 149)<$fish+10) {  // рыбачим!
+               //рандом, на то что поймали
+                 //$r=rand(0, 4); // 6 видов рыбёшек
+                 $f=array("тунец", "окунь", "осётр", "бронзовая рыбка", "золотая рыбка", "кальмаp", "рак", "барабулька", "бычок", "щука");
+                 $r=rand(0, count($f)-1);
+                 $cf=array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);  // индекс цены рыбы
+                 $koeff=round($fish/40);
+                    $ex=explode("|", $player['items'][$use]);
+                    $kkkkk=1;
+                    if ($ex[4]>=2) $kkkkk=$ex[4]*3;
+                 $x=rand(1*$koeff*$kkkkk, 5*$koeff*$kkkkk);
+                 $xx=$xx+3;
+                   if (rand(0, 20)==5) {
+                             //$r=11;
+                 $player['items']['item.art.sokr_ih']="Сокровище Ихтиандра|1|0";
+                           } else {
+
+                 // добавим в рюкзак
+                 if ($player['items']["item.food.fish.$r"]) { //если у юзера была рыба, то приплюсовываем новое значение
+              $fi=explode("|", $player['items']["item.food.fish.$r"]);// теперь в $fi[1] есть кол-во старой руды
+              }
+                           $xx=round($xx);
+                          $xz_after=$fi[1]+$xx;
+                        //  $xz_after=round($xz_after);
+             $player['items']["item.food.fish.$r"]="$f[$r]|$xz_after|".(7+$cf[$r])."|".(10+$cf[$r])."|0";
+
+             $ex=explode("|", $player['items'][$use]);
+             $ex[3]--;
+               if ($ex[3]<=0) $ex[1]--;
+               $player['items'][$use]=$ex[0]."|".$ex[1]."|".$ex[2]."|".$ex[3];
+               if ($ex[1]<=0) $player['items'][$use]="Поломанная удочка."."|".$ex[1]."|".$ex[2]."|".$ex[3];
+
+
+                 addjournal($login, "Вы поймали $xx штук $f[$r]");
+                 $player['deystvo']=time();
+                 //addjournal("user.admin", "$login(".$player['title'].") поймал $x штук $f[$r]");
+                  addjournalall($player["loc"],$player["title"]." поймал $xx штук $f[$r]",$login);
+                  }
+               } else {
+               $r=rand(0, 3);
+               $ms[]="Рыба сорвалась";
+               $ms[]="Ничего нет";
+               $ms[]="Может ещё разок?";
+               $ms[]="Видать кому-то ботинок не жалко было выкидывать..";
+                  addjournal($login, "$ms[$r]");
+               };
+
+               } else {
+               addjournal($login, "В этом месте нельзя рыбачить");
+               };
+
+            } else 
+			if (substr($use,0,10)=='item.topor')
+			{
+			if (!$to) $list='all';
+				else if ( isset($game["loc"][$player["loc"]][$to] ) && substr($to,0,20)=="item.stand.res.wood.") {
+			$sk=split("\|",$player["skills"]);
+			$sk=$sk[22];
+			$kol=split("\|",$game["loc"][$player["loc"]][$to]);
+			$kol=$kol[1];
+			$kol=$kol*$sk;
+			$item=split("\|","дерево|0|1");
+			$nazv="item.res.wood";
+
+		unset($game["loc"][$player["loc"]][$to]);
+
+		if ( isset($player["items"][$nazv]) ) $itemp=split("\|",$player["items"][$nazv]); else $itemp=$item;
+		$itemp[1]+=$kol;
+		$itemp[2]=1; //чтобы сбросить старое дерево
+		$player["items"][$nazv]=implode("|",$itemp); 
+		addjournal($login,"Вы нарубили ".$kol." дерева");
+		addjournalall($player["loc"],$player["title"]." нарубил(а) ".$kol." дерева",$login);
+			
+			}
+                        }  else  if (substr($use,0,10)=='item.molot') {//А теперь покуём...
+                                       $skills=split("\|",$player["skills"]);
+        if ($game[loc][$player[loc]]['item.stand.pechka']) { // если он стоит рядом с печкой
+
+            if (!$id) { // Что есть у нашего героя..
+              $stmp="<p> Из чего ковать?";
+                                        foreach(array_keys($player["items"]) as $i) {
+                                                $stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&use=item.molot&id=".$i."\">";
+                                                $k=split("\|",$player["items"][$i]);
+                                                if ($k[1]>1) $stmp.=$k[0]." (".$k[1].")"; else $stmp.=$k[0];
+                                                $stmp.="</a>";
+                                                }
+                                        msg($stmp,$player["title"]);
+
+             }else {   // Взяли "руду" , проверим то ли энто
+              if (substr($id,0,8)!='item.ore') {
+              $resultat=" это не руда!";
+              } else { // Ну взял ты руду, а теперь что?1.Мало ли её??? 2.Ага, нужен молот!
+              $eee=explode("|", $player['items']['item.ore']);
+                    if ($eee[1]<19) {
+                     $resultat="Мало руды!";
+                    } else {
+               //$eee=explode($player['items'])
+                 if (!$player["items"]['item.molot']) { // не имеется такая чту-чка дручка
+                      $resultat="У вас нету молота";
+                 } else {     //  имеется такая чту-чка дручка
+                 // Теперь относительно скила бс выведем что моежт наш нигретёнок))
+                 if ($skills[27]<6) {   // тупой ньюбай бс
+                        $resultat="слишком маленький уровень кования. Поднимите его минимум до 6";
+
+
+                 } elseif ($skills[27]<=50) { // что-то где-то умеет>
+                       // маловероятно, что что-то получится!
+                       // $resultat="что-то где-то умеет";
+
+                       // Договоримся, что на одну хуёвину для скования уходит 19 руды
+                          /*
+                            item.weapon.xxx=title|count|cost|damage_min|damage_max|str|speed|weaponby|need_id|needtitle
+                            item.weapon.ranged.xxx        - стрелковые, может иметь need
+                            item.weapon.knife.xxx        -для освеживания туш
+                            item.armor.body|hand|leg|head|shield.xxx=title|count|cost|armor
+                          */
+#############################
+                          $iii=array(
+                             "item.armor.shield.starter"=>        "Щит начинающего бойца|1|400|7",
+                             "item.armor.shield.umeren"=>        "Щит умеренности|1|650|10",
+                             "item.weapon.sword"=>        "Меч|1|60|10|20|41|5|мечом||",
+                            "item.weapon.yatagan"=>                "ятаган|1|50|20|40|47|7|ятаганом||",
+                              "item.armor.head"=>                "Шлем начинающего бойца|1|500|10",
+                              "item.molot"=>                      "Молот|1|100",
+                              "item.axe"=>                         "Кирка|1|100",
+                                "item.weapon.poleaxe"=>                "секира|1|210|40|60|40|8|секирой||",
+                            );
+                            $iiii=array(
+                             "item.armor.shield.starter",
+                              "item.armor.shield.umeren",
+                               "item.weapon.sword",
+                                "item.weapon.yatagan",
+                                 "item.armor.head",
+                                 "item.molot",
+                                 "item.axe",
+                                 "item.weapon.poleaxe",
+
+                            );
+##############################
+                       if (rand(0, 150)<=$skills[27]*2) { //> выиграли в лоттерее, и выводим меню выбора армора
+
+                            if (!$what)  { // нету чего ковать, меню
+
+                            $i=0;
+                            foreach($iii as $aaa)
+                            {     $aaa=explode("|", $aaa);
+                                $resultat.="<a href=\"$PHP_SELF?sid=$sid&use=item.molot&what=".$iiii[$i]."&id=$id\">$aaa[0]</a><br/>";
+                            $i++;
+                            };
+                                //$resultat="<a href=\"$PHP_SELF?sid=$sid&use=skill.bs&what=item.armor.shield.heavy&id=$id\">ХЗ что</a><br/>";
+                            } elseif ($iii[$what]) {// куёмс..
+                            $use="item.ore";
+                            $item=split("\|",$player["items"]["item.ore"]);
+                            $item[1]-=19;
+                            if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+                                   $ex='';
+                                $ex=explode("|", $iii[$what]);
+                                $resultat="Сковали!";
+                                $player['deystvo']=time();
+                                if($player['items'][$what])
+                                {
+                                 $ex[1]++;
+                                };
+                            //    $player['items'][$what]="$ex[0]|$ex[1]|$ex[2]";
+                            $ex[0].=" by $player[title]";  //допишем имя крафтера
+                            $player['items'][$what]=implode("|",$ex);
+                            };
+                       } else { // не повезло, и мы сожгла всю руду.
+                            $resultat="Увы, но руда сожглась!";
+                            $use="item.ore";
+                            $item=split("\|",$player["items"]["item.ore"]);
+                            $item[1]-=19;
+                         if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+                         };
+
+                 } elseif ($skills[27]<=100 and $skills[27]>50) {//
+
+
+###############################
+                 $iii=array(
+                               "item.armor.shield.starter"=>        "Щит начинающего бойца|1|400|7",
+                             "item.armor.shield.umeren"=>        "Щит умеренности|1|650|10",
+                             "item.weapon.sword"=>        "Меч|1|60|10|20|41|5|мечом||",
+                            "item.weapon.yatagan"=>                "ятаган|1|50|20|40|47|7|ятаганом||",
+                              "item.armor.head"=>                "Шлем начинающего бойца|1|500|10",
+                              "item.molot"=>                      "Молот|1|100",
+                              "item.axe"=>                         "Кирка|1|100",
+                                "item.weapon.poleaxe"=>                "секира|1|210|40|60|40|8|секирой||",
+                             "item.armor.shield.heavy"=>        "Тяжёлый щит|1|400|15",
+                               "item.armor.shield.bronze"=>        "Бронзовый щит|1|250|20",
+                                 "item.weapon.kryss"=>                "кривой меч|1|50|40|60|47|7|мечом||",
+                            );
+                            $iiii=array(
+                              "item.armor.shield.starter",
+                              "item.armor.shield.umeren",
+                               "item.weapon.sword",
+                                "item.weapon.yatagan",
+                                 "item.armor.head",
+                                 "item.molot",
+                                 "item.axe",
+                                 "item.weapon.poleaxe",
+                             "item.armor.shield.heavy",
+                             "item.armor.shield.bronze",
+                             "item.weapon.kryss",
+                            );
+
+################################
+
+                       if (rand(100, 200)<=$skills[27]*2) { //выиграли в лоттерее, и выводим меню выбора армора
+
+                            if (!$what)  { // нету чего ковать, меню     <?
+
+                            $i=0;
+                            foreach($iii as $aaa)
+                            {     $aaa=explode("|", $aaa);
+                                $resultat.="<a href=\"$PHP_SELF?sid=$sid&use=item.molot&what=".$iiii[$i]."&id=$id\">$aaa[0]</a><br/>";
+                            $i++;
+                            };
+                                //$resultat="<a href=\"$PHP_SELF?sid=$sid&use=skill.bs&what=item.armor.shield.heavy&id=$id\">ХЗ что</a><br/>";
+                            } elseif ($iii[$what]) {// куёмс..
+                            $use="item.ore";
+                            $item=split("\|",$player["items"]["item.ore"]);
+                            $item[1]-=19;
+                                                           if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+
+                                   $ex=explode("|", $iii[$what]);
+                                $resultat="Скували!";
+                                $player['deystvo']=time();
+                                if($player['items'][$what])
+                                {
+                                 $ex[1]++;
+                                };
+                                       //    $player['items'][$what]="$ex[0]|$ex[1]|$ex[2]";
+                            $ex[0].=" by $player[title]";  //допишем имя крафтера
+                            $player['items'][$what]=implode("|",$ex);
+                            };
+                       } else { // не повезло, и мы сожгла всю руду.
+                            $resultat="Увы, но руда сожглась!";
+                            $use="item.ore";
+                            $item=split("\|",$player["items"]["item.ore"]);
+                            $item[1]-=19;
+                        if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+                         };
+                         //  $resultat="что-то где-то умеет2";
+                 } elseif ($skills[27]>100) { //гм))
+
+#############################
+                       $iii=array(
+                            "item.armor.shield.starter"=>        "Щит начинающего бойца|1|400|7",
+                            "item.armor.shield.umeren"=>        "Щит умеренности|1|650|10",
+                            "item.weapon.sword"=>        "Меч|1|60|10|20|41|5|мечом||",
+                            "item.weapon.yatagan"=>                "ятаган|1|50|20|40|47|7|ятаганом||",
+                            "item.armor.head"=>                "Шлем начинающего бойца|1|500|10",
+                            "item.molot"=>                      "Молот|1|100",
+                            "item.axe"=>                         "Кирка|1|100",
+                            "item.weapon.poleaxe"=>                "секира|1|210|40|60|40|8|секирой||",
+                            "item.armor.shield.heavy"=>        "Тяжёлый щит|1|400|15",
+                            "item.armor.shield.bronze"=>        "Бронзовый щит|1|250|20",
+                            "item.weapon.kryss"=>                "кривой меч|1|50|40|60|47|7|мечом||",
+                            "item.armor.shield.super"=>        "Щит мастера кования|1|400|40",
+                            "item.armor.shield.golds"=>        "Золотой щит|1|250|50",
+                            "item.weapon.supersword"=>        "Меч мастера кования|1|1200|100|200|90|10|мечом||",
+
+                            );
+                            $iiii=array(
+                            "item.armor.shield.starter",
+                            "item.armor.shield.umeren",
+                            "item.weapon.sword",
+                            "item.weapon.yatagan",
+                            "item.armor.head",
+                            "item.molot",
+                            "item.axe",
+                            "item.weapon.poleaxe",
+                            "item.armor.shield.heavy",
+                            "item.armor.shield.bronze",
+                            "item.weapon.kryss",
+                            "item.armor.shield.super",
+                            "item.armor.shield.golds",
+                            "item.weapon.supersword",
+                            );
+#############################
+                       if (rand(19, 20)<=$skills[27]*2) { //> выиграли в лоттерее, и выводим меню выбора армора
+
+                            if (!$what)  { // нету чего ковать, меню
+
+                            $i=0;
+                            foreach($iii as $aaa)
+                            {     $aaa=explode("|", $aaa);
+                                $resultat.="<a href=\"$PHP_SELF?sid=$sid&use=item.molot&what=".$iiii[$i]."&id=$id\">$aaa[0]</a><br/>";
+                            $i++;
+                            };
+                                //$resultat="<a href=\"$PHP_SELF?sid=$sid&use=skill.bs&what=item.armor.shield.heavy&id=$id\">ХЗ что</a><br/>";
+                            } elseif ($iii[$what]) {// куёмс..
+                            $use="item.ore";
+                            $item=split("\|",$player["items"]["item.ore"]);
+                            $item[1]-=19;
+                            if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+
+                                  $ex=explode("|", $iii[$what]);
+                                $resultat="Сковали!";
+                                $player['deystvo']=time();
+                                if($player['items'][$what])
+                                {
+                                 $ex[1]++;
+                                };
+                                         //    $player['items'][$what]="$ex[0]|$ex[1]|$ex[2]";
+                            $ex[0].=" by ".$player['title'];  //допишем имя крафтера
+                          //  foreach ($ex as $j) {
+                          //           $item_to_pl.=$j."|";
+                           // };
+                           $player['items'][$what]=implode("|",$ex);
+
+                            //  $player['items'][$what]=$item_to_pl;
+                            };
+                       } else { // не повезло, и мы сожгла всю руду.
+                            $resultat="Увы, но руда сожглась!";
+                            $use="item.ore";
+                            $item=split("\|",$player["items"]["item.ore"]);
+                            $item[1]-=19;
+                    if ($item[1]>0) $player["items"][$use]=implode("|",$item); else unset($player["items"][$use]);
+                         };
+                 };
+
+              };
+             };
+             };
+               msg("$resultat", "Куём...");
+             }
+             } else { // если он не стоит рядом с печкой
+                    msg("Нет рядом наковальни!", "бебе");
+                    }
+          }             if (substr($use,0,8)=='item.axe'){
+             //addjournal($login, "xz");
+             $exx=explode("|", $player['items'][$use]);
+             if (!$exx[3]) $exx[3]=20;
+             $player['items'][$use]=$exx[0]."|".$exx[1]."|".$exx[2]."|".$exx[3];
+            // unset($exx);
+
+             if ($game['loc'][$game['players'][$login]]['item.stand.ore']) { //если в одной локации с игроком есть камень item.stand.ore то кидаем в бэкпак ранд(1, 4)+скилл.мининг
+             $mor_skills=explode("|", $player['skills']);
+             $skill_mining=$mor_skills[22];
+             $xz=rand(1, 3)+$skill_mining-20;
+             if ($xz<0) $xz=0;
+             if ($player['items']['item.ore']) { //если у юзера была руда, то приплюсовываем новое значение
+              $ore=explode("|", $player['items']['item.ore']);// теперь в $ore[1] есть кол-во старой руды
+             }
+             $xz=$xz/50;
+             $xz=round($xz);
+             $xz_after=$ore[1]+$xz;
+             $player['items']['item.ore']="Руда|$xz_after|2";
+
+             // теперь рандомли подымим стр и мининг
+             $rr=rand(1, 200);
+             if ($rr=="1" or $rr=="2" or $rr=="8") { // 3 шанса из 100, что выпадет 1 или 2 и тогда, если тебе повезёт, ты можешь выиграть приз! +1 мининг или стр
+                 //теперь выясним, чёт или не чёт рандома, потом если чёт, то +мининг, нечёт +стр
+                 if (is_int($rr/2)) {  // чёт, +мининг
+                  //$player['skills']=str_replace($skill_mining, $skill_mining+1, $player['skills']);
+
+                    $skills=split("\|",$player["skills"]);
+                    $skills[28]++;
+                    $player["skills"]=implode("|",$skills);
+                    calcparam($login);        // пересчитаем основные параметры
+
+                  addjournal($login,"Твой навык рудокоп поднялся на 1!");
+                 } else {  // нечёт, +стр
+                                   //$player['skills']=str_replace($skill_mining, $skill_mining+1, $player['skills']);
+
+                    $skills=split("\|",$player["skills"]);
+                    if ($skills[0]<=$points_limit_attr_one) {
+                    $skills[0]++;
+                    $player["skills"]=implode("|",$skills);
+                                        calcparam($login);        // пересчитаем основные параметры
+
+                  addjournal($login,"Твоя сила поднялась на 1!");
+                  } else {
+                           addjournal($login,"Твоя сила и так на максимуме!!");
+                          
+                          };
+                 }
+            }
+
+             addjournal($login,"Вы выкопали $xz руды");
+             addjournalall($player["loc"],$player["title"]." выкопал $xz руды",$login);
+             $player['deystvo']=time();
+             $ex=explode("|", $player['items'][$use]);
+             $ex[3]--;
+            // echo $ex[0];
+            // echo $player['items'][$use];
+
+               //echo $player['items'][$use];
+               if ($ex[3]<=0) $ex[1]--;
+               $player['items'][$use]=$ex[0]."|".$ex[1]."|".$ex[2]."|".$ex[3];
+               if ($ex[1]<=0) $player['items'][$use]="Затупившаяся кирка"."|".$ex[1]."|".$ex[2]."|".$ex[3];
+             }// else
+
+            } else 
+			if (substr($use,0,10)=='item.kirka')
+			{
+			if (!$to) $list='all';
+				else if ( isset($game["loc"][$player["loc"]][$to] ) && substr($to,0,19)=="item.stand.res.kam.") {
+			$sk=split("\|",$player["skills"]);
+			$sk=$sk[23];
+			$kol=split("\|",$game["loc"][$player["loc"]][$to]);
+			$kol=$kol[1];
+			$kol=$kol*$sk;
+			$item=split("\|","гранит|0|1");
+			$nazv="item.res.kam";
+
+		unset($game["loc"][$player["loc"]][$to]);
+
+		if ( isset($player["items"][$nazv]) ) $itemp=split("\|",$player["items"][$nazv]); else $itemp=$item;
+		$itemp[1]+=$kol;
+		$player["items"][$nazv]=implode("|",$itemp);
+		addjournal($login,"Вы добыли <b>$kol гранита</b>");
+		addjournalall($player["loc"],$player["title"]." добыл(а) <b>$kol гранита</b>",$login);
+
+			}
+}                               else if (substr($use, 0, 11)=="item.potion") {
+                                  // опасная чтука
+                                  if (substr($use,11,4)==".all") $all=true;//действует на всех
+                                  $sk=explode("|", $player['skills']);
+                                  $rand=rand(0, 150);
+                                  if ($rand<$sk[10]){
+                                  if (!$all && !$to) eval(implode('', file("f_listall.dat")));
+                                  if (!$all && $to) {
+                                          if (!$game['loc'][$player['loc']][$to]) msg("Нету цели!");
+                                          $to=&$game['loc'][$player['loc']][$to];
+                                          $from=&$player;
+                                          $formid=$login;
+                                           $ex=explode("|",$player['items'][$use]);
+                                           $uron=rand($ex[3], $ex[4]);
+                                           if ($to['god']) $uron=0;
+                                           $to['life']-=$uron;
+                                           if ($to["life"]<0) $to["life"]=0;
+                                           if ($to["life"]<1) { eval(implode('',file("f_kill.dat"))); };
+                                           addjournal($login, "Вы нанесли урон взрывом ".$ex[5]." ".$uron." ".$to['title']);
+                                           addjournal($to, $player['title']." нанес вам урон взрывом ".$ex[5]." ".$uron);
+                                           $ex[1]--;
+
+                                          if ($ex[1]<=0) unset($player['items'][$use]); else
+                                           $player['items'][$use]=implode("|",$ex);
+
+                                          //  $loc1=split("\|",$locations[$loc]);
+                                          // if ($loc1[1])
+                                           docrim($login); //гуард
+
+
+                                           };
+                                  if ($all) {
+                                  foreach (array_keys($game['loc'][$player['loc']]) as $i)   {
+                                          $ex=explode("|",$player['items'][$use]);
+                                           if (substr($i, 0, 2)=="u.") {
+                                           $uron=rand($ex[3], $ex[4]);
+                                           if ($game['loc'][$player['loc']][$i]['god']) $uron=0;
+                                           $game['loc'][$player['loc']][$i]['life']-=$uron;
+                                           if ($game['loc'][$player['loc']][$i]["life"]<0) $game['loc'][$player['loc']][$i]["life"]=0;
+                                           if ($game['loc'][$player['loc']][$i]["life"]<1) { $to=&$game['loc'][$player['loc']][$i]; $toid=$i; eval(implode('',file("f_kill.dat"))); };
+                                           addjournal($login, "Вы нанесли урон взрывом ".$ex[5]." ".$uron." ".$game['loc'][$player['loc']][$i]['title']);
+                                           addjournal($to, $player['title']." нанес вам урон взрывом ".$ex[5]." ".$uron);
+                                           }
+                                          };
+                                //  $loc1=split("\|",$locations[$loc]);
+                                          // if ($loc1[1])
+                                          $ex[1]--;
+                                          if ($ex[1]<=0) unset($player['items'][$use]); else
+                                           $player['items'][$use]=implode("|",$ex);
+                                            docrim($login); //гуард
+                                          };
+                                          } else {                         $ex=explode("|",$player['items'][$use]);
+                                                                                             $ex[1]--;
+
+                                          if ($ex[1]<=0) unset($player['items'][$use]); else
+                                           $player['items'][$use]=implode("|",$ex);
+                                                   addjournal($login, "Вы промахнулись!");
+                                                   };
+
+                          }
+};

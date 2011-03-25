@@ -1,0 +1,24 @@
+
+		eval(implode('',file("f_magic.dat")));
+		eval(implode('',file("f_magic_look.dat")));	// здесь словесное описание
+		$m=split("\|",$arr_magic[$look]);
+		$stmp="<p>".$m[0];
+		$stmp.="<br/>".$arr_magic_look[$look];
+		$stmp.="<br/>Слова: ".$m[3];
+		$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&look=desc.mlevel\">Уровень</a>: ".$m[2];
+		$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&look=desc.mmana\">Мана</a>: ".$m[1];
+		$stmp.="<br/>Урон: ".$m[4]."-".$m[5];
+		if ($m[6]) $stmp.="<br/>Требует цель";
+		if ($m[7]) $stmp.="<br/>Действует только на преступников";
+		$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&look=desc.mspeed\">Скорость</a>: ".$m[8];
+		$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&look=desc.mreg\">Реагенты</a>: ";
+		for ($i=9;$i<count($m);$i++) {
+			$r=split(":",$m[$i]); 
+			$stmp.="<br/>".$r[2]; 
+			if ($r[1]>1) $stmp.=" (".$r[1].")";
+			}
+
+
+
+
+

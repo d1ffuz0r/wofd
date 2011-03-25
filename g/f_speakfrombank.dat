@@ -1,0 +1,38 @@
+					if (!$game["loc"][$player["loc"]][$speak]["bankir"]) msg("<p>Это не банкир");
+					if (!$to) {		// список
+						if (count($player["bank"])==0) msg("<p>У вас нет в банке ни одного предмета");
+						$stmp="<p>Предметы:";
+						$ind=0; $count=0; if(!$start) $start=0;
+						foreach(array_keys($player["bank"]) as $i) {
+							if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+							$k=split("\|",$player["bank"][$i]);
+							if ($k[1]>1) $k=$k[0]." (".$k[1].")"; else $k=$k[0];
+							$stmp.="\n<br/><anchor>".$k."<go href=\"#menu\"><setvar name=\"to\" value=\"".$i."\"/></go></anchor>";
+							}
+							$ind++;
+							}
+						if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id\">^ </a>";}
+						if ($start+$count_show<count($player["bank"])) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&start=".($start+$count_show)."\">+ (".(count($player["bank"])-$start-$count_show).")</a>";}
+						// меню
+						$stmp.="\n</p>\n</card>\n<card id=\"menu\" title=\"Меню\">\n<p>\n<a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$(to)\">Забрать</a>\n<br/><a href=\"$PHP_SELF?sid=$sid&from=bank&look=$(to)\">Инфо</a>";
+						msg($stmp,"Забрать из банка");
+						}else {	// передаем $to
+							if (!isset($player["bank"][$to])) {msg("<p>В банке нет этого предмета");} else {
+							$item=split("\|",$player["bank"][$to]);
+							// проверим кол-во
+							$num=intval($num);
+							if ($item[1]>1 && !$num) {		// запросим кол-во
+								$stmp="<p>Укажите количество:\n<br/><input format=\"*N\" maxlength=\"9\" name=\"num\" value=\"".$item[1]."\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$to&num=$(num)\">ok</a><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&to=$to&num=100000\">все</a>";
+								msg($stmp);
+								}
+							if (!$num || $num<1) $num=1;
+							if ($num>$item[1]) $num=$item[1];
+							// удаляем из банка
+							$item[1]-=$num;
+							if ($item[1]<=0) unset($player["bank"][$to]); else $player["bank"][$to]=implode("|",$item);
+							// добавляем игроку в items
+							if (isset($player["items"][$to])) $itemp=split("\|",$player["items"][$to]); else {$itemp=$item; $itemp[1]=0;}
+							$itemp[1]+=$num;
+							$player["items"][$to]=implode("|",$itemp);
+							msg("Вы забрали из банка ".$num." ".$item[0]."<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id\">из банка</a>/<a href=\"$PHP_SELF?sid=$sid\">в игру</a>");
+							}}

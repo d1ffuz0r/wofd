@@ -1,0 +1,9 @@
+
+if ($use) {			//linkИспользовать
+	// если нужна цель, то задаем $list='all' и ниже выведется список целей
+	if ($player["ghost"]) msg("<p>Вы призрак и поэтому не можете ничего использовать, найдите лекаря или камень воскрешения");
+	$scroll = 0; 				// кастуем не со свитка, может измениться, если используем предмет-свиток
+	if (substr($use,0,5)=="item.")  eval(implode('',file("f_useitem.dat")));
+	if (substr($use,0,6)=="magic.") eval(implode('',file("f_usemagic.dat")));
+	if (substr($use,0,6)=="skill.") eval(implode('',file("f_useskill.dat")));
+	}

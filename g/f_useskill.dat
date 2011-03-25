@@ -1,0 +1,234 @@
+// использование скиллов
+
+		$skills=split("\|",$player["skills"]);
+			if ($use=='skill.ingen') {
+				if (!$to) {$list='all';} else { //?возможно "inv"
+				if (!isset($player["items"][$to])) msg("Этого предмета у вас нет");
+				if (substr($to,0,11)!="item.chert.") msg("Применить навык можно только на <b>чертеж предмета</b>");
+				$chert=split("\|",$player["items"][$to]);
+				//проверки ресурсов
+				if (!isset($player["items"]["item.res.wood"])) msg("У вас нет <b>дерева</b>");
+				if (!isset($player["items"]["item.res.kam"])) msg("У вас нет <b>камня</b>");
+
+				if ($chert[3]==0){$der=$chert[14];$kam=$chert[15];} //оружие
+				if ($chert[3]==1){$der=$chert[8];$kam=$chert[9];} //броня
+
+				$der2=split("\|",$player["items"]["item.res.wood"]);
+				$der1=$der2[1];
+				$kam2=split("\|",$player["items"]["item.res.kam"]);
+				$kam1=$kam2[1];
+
+				if ($der1<$der) msg("Мало ресурсов. Необходимо <b>$der дерева</b>");
+				if ($kam1<$kam) msg("Мало ресурсов. Необходимо <b>$kam камня</b>");
+				//проверяем умения
+				if ($skills[24]<$chert[6]) msg("У вас слишком низкий навык <b>кузнец</b>");
+				if ($skills[2]<$chert[5]) msg("У вам слишком низкий <b>интеллект</b>");
+				//уменьшаем ресурсы и удаляем 1 чертеж
+				$der2[1]-=$der;
+				$kam2[1]-=$kam;
+				if ($der2[1]==0) unset($player["items"]["item.res.wood"]); else $player["items"]["item.res.wood"]=implode("|",$der2);
+				if ($kam2[1]==0) unset($player["items"]["item.res.kam"]); else $player["items"]["item.res.kam"]=implode("|",$kam2);
+				$chert[1]-=1;
+				if ($chert[1]==0) unset($player["items"][$to]); else $player["items"][$to]=implode("|",$chert);
+				//возможность ошибиться
+				if (rand(0,$chert[4])>$skills[1]) msg("У вас ничего не получилось. Возможно, стоит развить <b>ловкость</b>");
+				//все ок, создаем предмет
+				$i_lbl=substr($chert[0],7,strlen($chert[0])-8);
+				$i_name=substr($to,11);
+				$i_price=$chert[2]+round($chert[2]/100*20);//+20% к цене чертежа
+				if ($chert[3]==0){ //оружие
+					$new="$i_lbl|1|$i_price|$chert[7]|$chert[8]|$chert[9]|$chert[10]|$chert[11]|$chert[12]|$chert[13]";
+					$i_name="item.weapon.".$i_name;
+				}
+				if ($chert[3]==1){ //броня
+					$new="$i_lbl|1|$i_price|$chert[7]";
+					$i_name="item.armor.".$i_name;
+				}
+				if (isset($player["items"][$i_name])){
+					$old=split("\|",$player["items"][$i_name]);
+					$old[1]+=1;
+					$player["items"][$i_name]=implode("|",$old);
+				}else $player["items"][$i_name]=$new;
+				msg ("Вы создали <b>$i_lbl</b>");
+			}
+			}
+		if ($use=='skill.meditation') {
+			if (rand(0,100)<=$skills[5]*15 && $player["mana"]<$player["mana_max"]){
+				if ( !isset($player["tskmed"]) || $player["tskmed"]<time() ){
+					$player["tskmed"] = time() + rand(2,4);
+					$player["mana"]+=1;
+					addjournal($login,"Мана +1");
+				}
+				else addjournal($login,"Слишком часто медитируете");
+			}
+			else addjournal($login,"Медитация прервалась");
+			}
+		if ($use=='skill.animaltaming') {
+			if (!$to) {$list='all';} else {
+			if (!isset($game["loc"][$player["loc"]][$to]) || substr($use,0,4)=="npc.") msg("<p>Некого приручать");
+			if ($game["loc"][$player["loc"]][$to]["tame"]) {
+				$tame=10*($skills[7]+1-$game["loc"][$player["loc"]][$to]["tame"]);
+				if ($tame>0 && $skills[20]>0) {
+					if (rand(0,100)<=$tame) { $game["loc"][$player["loc"]][$to]["guard"]=$login; unset($player["attack"]); unset($game["loc"][$player["loc"]][$to]["attack"]);  $game["loc"][$player["loc"]][$to]["owner"]=$login; $game["loc"][$player["loc"]][$to]["follow"]=$login; $ta=60; if ($login=="user.admin") $ta=600000; $game["loc"][$player["loc"]][$to]["time_owner"]=time()+$ta+rand(0,$skills[20]*10*60); addjournal($login,"Вы приручили ".$game["loc"][$player["loc"]][$to]["title"]);} else addjournal($login,"Не получилось приручить ".$game["loc"][$player["loc"]][$to]["title"]);
+					}else addjournal($login,"Слишком низкие навыки изучения и приручения животных");
+				}else addjournal($login,"Это существо невозможно приручить");
+			}
+			}
+		if ($use=='skill.steal') {
+			if (!$to) {$list='all';} else {
+			if ($to==$admin) msg("<p>Я тебе поворую у админа!");
+      if ($to==$login) msg("<p>Нельзя воровать у самого себя");
+			if (substr($to,0,4)=='npc.') msg("<p>Воровать можно только у других игроков");
+			if (!isset($game["loc"][$player["loc"]][$to]) || substr($use,0,5)=="user.") msg("<p>Не у кого воровать (можно только у игроков)");
+			if ($player["loc"]=="loc.bank") msg("<p>Нельзя воровать на охраняемой территории");
+      $skillsto=split("\|",$game["loc"][$player["loc"]][$to]["skills"]);
+//			$skillsto=split("\|",$game["loc"][$player["loc"]][$to]);
+
+			if (!$id) {	// выведем список инвентори
+				if (rand(0,100)<5*($skills[1]+$skills[19]-$skillsto[18])) {
+					if (count($game["loc"][$player["loc"]][$to]["items"])==0) msg("<p>У этого игрока ничего нет");
+					$stmp="<p>Предметы:";
+					foreach(array_keys($game["loc"][$player["loc"]][$to]["items"]) as $i) {
+						$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&use=skill.steal&to=".$to."&id=".$i."\">";
+						$k=split("\|",$game["loc"][$player["loc"]][$to]["items"][$i]);
+						if ($k[1]>1) $stmp.=$k[0]." (".$k[1].")"; else $stmp.=$k[0];
+						$stmp.="</a>";
+						}
+					msg($stmp,$game["loc"][$player["loc"]][$to]["title"]);
+					} else { $time_crim = 10*60; docrim($login); addjournal($login,"Вас заметили!"); addjournal($to,$player["title"]." пытался подглядеть в ваш рюкзак!");}
+				} else {	// воруем предмет $id, причем не спрашивая кол-во
+					$steal=5*($skills[1]+$skills[6]-3);
+					if ($steal>0) {
+						if (rand(0,100)<5*($skills[1]+$skills[6]-$skillsto[18]*1.5)) {
+						      if (isset($player["tV"]) && time()<$player["tV"]) msg("<p>Воровать можно один раз в минуту!");
+							$player["tV"]=time()+60;
+							if (!isset($game["loc"][$player["loc"]][$to]["items"][$id])) msg("<p>У игрока нет такого предмета");
+							if (strpos($id,".imen.")) msg("<p>Слишком рискованное занятие!");
+							if (array_search($id,$game["loc"][$player["loc"]][$to]["equip"])) { $time_crim = 20*60; docrim($login); addjournal($login,"Вас застали за воровством!"); addjournal($to,$player["title"]." пытался вас обворовать!"); msg("<p>Вы пытались украсть одетый предмет");}
+							if (isset($player["items"][$id])) {
+								$k=split("\|",$game["loc"][$player["loc"]][$to]["items"][$id]);
+								$k1=split("\|",$player["items"][$id]);
+								$k1[1]+=$k[1];
+								$player["items"][$id]=implode("|",$k1);
+								} else $player["items"][$id]=$game["loc"][$player["loc"]][$to]["items"][$id];
+							unset($game["loc"][$player["loc"]][$to]["items"][$id]);
+							calcparam($to);
+							}else { $time_crim = 20*60; docrim($login); addjournal($login,"Вас застали за воровством!"); addjournal($to,$player["title"]." пытался вас обворовать!");}
+						}else addjournal($login,"Слишком низкие навыки воровства и подглядывания");
+					}//воруем предмет
+			}
+			}//skill.steal
+                    if ($use=='skill.repair')  {  //ну-ка починим=)
+                          if (!$to) {$list='all';} else {
+                            if ($repair>0) {
+                            if ($to!='item.axe' && $to='item.rod') {
+                            addjournal($login,"Чинить можно только удочку или кирку");
+                            } else {
+                            $z=&$player['items'][$to];
+                            $ex=explode("|", $z);
+                            $ex[3]=($ex[3]+round($skills[29]/10));
+                            $z=implode("|", $ex);
+                            $player['deystvo']=time();
+                              addjournal($login,"Износ вашей $ex[0] стал $ex[3]");
+                           //     echo $z;
+                            }
+                          }else addjournal($login,"Слишком низкийй навык починки");
+                          }
+                        } else
+                        if ($use=='skill.alhemy') {
+
+                            if ($skills[30]<=6) {
+                                    msg("Слишком низкие знания алхимии");
+                                     };
+
+                    if (!$player['items']['item.bottle.empty']) {
+                         msg("У вас нету ни одной пустой бутылки");
+                            };
+                            $arr_to=array(
+                                "item.bottle.life",
+                                "item.bottle.life.great",
+                                "item.bottle.mana",
+                                "item.bottle.mana.great",
+                                "item.bottle.health",
+                                "item.potion.gremuch",
+                                "item.potion.all.adsk",
+                            );
+         $arr_to_make=array(
+        "item.bottle.life"=>      "напиток жизни|1|30|45|0|item.magic.moss:7:мох|item.magic.pearl:3:жемчуг",   //need_id:count:title
+        "item.bottle.life.great"=>"напиток великой жизни|1|150|75|0|item.magic.moss:8:мох|item.magic.pearl:3:жемчуг",
+        "item.bottle.mana"=>      "напиток маны|1|40|0|40|item.magic.moss:4:мох|item.magic.pearl:3:жемчуг",
+        "item.bottle.mana.great"=>"напиток великой маны|1|150|0|75|item.magic.moss:7:мох|item.magic.pearl:3:жемчуг",
+        "item.bottle.health"=>    "напиток исцеления|1|100|55|50|item.magic.moss:7:мох|item.magic.pearl:3:жемчуг",
+        "item.potion.gremuch"=>   "гремучая смесь|1|200|300|500|item.magic.pxlq:2:пыль|item.magic.slyuna:4:слюна ящера|item.magic.vulkpep:6:вулканический пепел",
+        "item.potion.all.adsk"=>  "адская смесь|1|200|200|350|item.magic.ognjem:6:огненный жемчуг|item.magic.jidzol:2:жидкое золото|item.magic.pxlq:2:пыль|item.magic.slyuna:4:слюна ящера|item.magic.vulkpep:6:вулканический пепел",
+        );
+//		$f=fopen("alchemy.dat", "r");
+//		$arr_to_make=unserialize(fread($f, 5555));
+		
+		    $ii=0;
+		    foreach (array_keys($arr_to_make) as $i) 
+		    {
+		    $arr_to[$ii]=$i;
+		    $ii++;
+		    };
+		             //    print_r($arr_to);
+		             // пыль - i.m.pxlq вyлkaнuчeckuй пeпeл - i.m.vulkpep
+                 //Cлюнa ящepa i.m.slyuna, жuдkoe зoлoтo i.m.jidzol
+                 // oгнeный жeмчyг i.m.ognjem
+                 // вyлkaнuчeckuй пeпeл u cлюнa ящepa для гpeмyчeй cмecu
+
+                  if ($skills[30]<100)  {$rand=rand(0, count($arr_to)-1);   }     else {
+                  if (@!$rand) {
+                  $j=0;
+                  foreach($arr_to_make as $i) {
+                          $xz=explode("|", $i);
+                           $listed.="<a href=\"$PHP_SELF?sid=$sid&use=skill.alhemy&rand=".$j."\">".$xz[0]."</a><br/>";
+                          $j++;
+                          };
+                            msg($listed);
+                          }
+                          };
+                           $regsok=1;
+
+                    $str=explode('|', $arr_to_make[$arr_to[$rand]]);
+
+                                      for ($i=5;$i<count($str);$i++) {
+                                        $reg=split(":",$str[$i]);
+                                        if (!isset($player["items"][$reg[0]])) {$regsok=0; $kol=$reg[1]; $st.="<br/>".$reg[2]."(".$kol.")";}
+                                                else {$item=split("\|",$player["items"][$reg[0]]); if ($item[1]<$reg[1]) {$regsok=0; $kol=$reg[1]-$item[1]; if ($st) $st.="<br/>".$reg[2]."(".$kol.")"; else $st="<br/>".$reg[2]."(".$kol.")";}}
+                                        }
+
+                                      $bot=explode("|",$player['items']['item.bottle.empty']);
+                                      $bot[1]--;
+                                      $player['items']['item.bottle.empty']=implode("|", $bot);
+
+
+
+                                                  $r=rand(15, 190);
+                    if ($r<$skills[30]) {
+                                       $regsj="";
+                                        if (!$regsok) msg("Не хватает реагентов: ".$st);
+                                        //убиваем реги
+                                for ($i=5;$i<count($str);$i++) {
+                                        $reg=split(":",$str[$i]);
+                                        $item=split("\|",$player["items"][$reg[0]]);
+                                        $item[1]-=$reg[1];
+                                        $regsj.="<br/>Вы потеряли ".$reg[1]." ".$reg[2]."!";
+                                        if ($item[1]<1) unset($player["items"][$reg[0]]); else $player["items"][$reg[0]]=implode("|",$item);
+                                           }
+                    if ($player['items'][$arr_to[$rand]]) { //если у юзера была рыба, то приплюсовываем новое значение
+              $fi=explode("|", $player['items'][$arr_to[$rand]]);// теперь в $fi[1] есть кол-во старой руды
+             }
+                          $xz_after=$fi[1]+$str[1];
+             $player['items'][$arr_to[$rand]]=$str[0]."|".$xz_after."|".$str[2]."|".$str[3]."|".$str[4];
+
+                    $make=$str[0]."|".$str[1]."|".$str[2]."|".$str[3]."|".$str[4];
+
+
+                         addjournal($login, "Вы получили \"".$str[0]."\"!");
+                         addjournal($login, "Вы потеряли 1 бутылку".$regsj);
+                         msg("Вы создали 1 ".$str[0]."");
+                          $player['deystvo']=time();
+                         } else {msg("Не вышло!");
+                         };
+                    }

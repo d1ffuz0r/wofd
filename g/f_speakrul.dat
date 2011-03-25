@@ -1,0 +1,13 @@
+$stak=substr($id,3);
+$stn=rand(1,3);//потом будем выводить
+if ($stak==$stn) $stak=1; else $stak=0;
+$price=5;
+$b=0;
+if (!isset($player["items"]["item.misc.money"])) $b=1; else {$m=split("\|",$player["items"]["item.misc.money"]); if ($m[1]<$price) $b=1;}
+if ($b) msg("У вас мало <b>денег</b>, чтобы играть надо <b>$price монет</b>");
+$m=split("\|",$player["items"]["item.misc.money"]);
+
+if ($stak) $m[1]+=$price; else $m[1]-=$price;
+if ($m[1]==0) unset($player["items"]["item.misc.money"]); else $player["items"]["item.misc.money"]=implode("|",$m);
+if ($stak) $soob="Вы выиграли. <b>+$price монет</b>"; else $soob="Вы проиграли. <b>-$price монет</b>";
+msg ($soob);

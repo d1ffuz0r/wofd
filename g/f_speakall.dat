@@ -1,0 +1,3 @@
+eval(implode('',file("f_speakall_all.dat")));
+eval(implode('',file("f_speakall_qw.dat")));
+$arr_speak=array_merge($arr_speak1,$arr_speak2);

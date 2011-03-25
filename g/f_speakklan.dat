@@ -1,0 +1,36 @@
+foreach(array_keys($player["items"]) as $i) {if (strpos($i,".imen.p.")) msg("<p>Вы уже являетесь главой клана");}
+foreach(array_keys($player["bank"]) as $i) {if (strpos($i,".imen.p.")) msg("<p>Вы уже являетесь главой клана");}
+$price=1000;
+if (!isset($player["items"]["item.misc.money"])) $b=1; else {$m=split("\|",$player["items"]["item.misc.money"]); if ($m[1]<$price) $b=1;}
+if ($b) msg("<p>Недостаточно денег (надо ".$price." монет)");
+
+if (!$klname){
+$stmp="<p>Укажите имя клана:\n<br/><input maxlength=\"15\" name=\"klname\"/>\n<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=$id&klname=$(klname)\">ok</a>";
+msg($stmp);
+}
+if (ereg("[^a-zA-Z0-9_]+",$klname)) msg("<p>Только латинские буквы и цифры в названии клана");
+if ($klname=="0" || $klname=="1" || $klname=="2") msg("<p>Клан уже существует");
+
+foreach (array_keys($game["players"]) as $i) {
+$lag=$game["loc"][$game["players"][$i]][$i]["lag"];
+if ($lag==$klname) msg("<p>Клан уже существует");
+}
+
+$vt1 = unserialize(implode("",file("klan.dat")));
+if (isset($vt1[$klname])) msg("<p>Клан уже существует");
+
+// забираем деньги
+$m=split("\|",$player["items"]["item.misc.money"]);
+$m[1]-=$price;
+if ($m[1]==0) unset($player["items"]["item.misc.money"]); else $player["items"]["item.misc.money"]=implode("|",$m);
+
+$pname="item.imen.p.".$player["title"];
+$player["items"][$pname]="посох вождя|1|".$klname;
+$player["lag"]=$klname;
+
+$vt1[$klname][$login]="2";
+$fl1 = fopen ("klan.dat", "w");
+fputs($fl1,serialize($vt1));
+fclose ($fl1);
+
+msg("<p>Вы стали главой клана $klname. Чтобы принять человека в клан, просто используйте посох на нем, чтобы исключить - используйте повторно.");

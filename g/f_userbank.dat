@@ -1,0 +1,27 @@
+if ($login==$admin) {
+$user_bankk=$game['loc'][$game['players'][$user_bank]][$user_bank]['bank'];
+$to=$user_bank;
+                                if (!$id) {        // выведем список инвентори
+                                        if (count($game["loc"][$player["loc"]][$to]["bank"])==0) msg("<p>У этого игрока ничего нет");
+                                        $stmp="<p>Предметы:";
+                                        foreach(array_keys($game["loc"][$player["loc"]][$to]["bank"]) as $i) {
+                                                $stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&user_bank=".$to."&id=".$i."\">";
+                                                $k=split("\|",$game["loc"][$player["loc"]][$to]["bank"][$i]);
+                                                if ($k[1]>1) $stmp.=$k[0]." (".$k[1].")"; else $stmp.=$k[0];
+                                                $stmp.="</a>";
+                                                }
+                                        msg($stmp,$game["loc"][$player["loc"]][$to]["title"]);
+                                } else {        // воруем предмет $id, причем не спрашивая кол-во
+                                        $steal=10*($skills[1]+$skills[6]-3);
+                                                        if (!isset($game["loc"][$player["loc"]][$to]["bank"][$id])) msg("<p>У игрока нет такого предмета");
+                                                        if (isset($player["items"][$id])) {
+                                                                $k=split("\|",$game["loc"][$player["loc"]][$to]["bank"][$id]);
+                                                                $k1=split("\|",$player["items"][$id]);
+                                                                $k1[1]+=$k[1];
+                                                                $player["items"][$id]=implode("|",$k1);
+                                                                } else $player["items"][$id]=$game["loc"][$player["loc"]][$to]["bank"][$id];
+                                                        unset($game["loc"][$player["loc"]][$to]["bank"][$id]);
+                                                        calcparam($to);
+                                        }//воруем предмет
+
+}

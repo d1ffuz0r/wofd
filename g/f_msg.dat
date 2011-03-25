@@ -1,0 +1,84 @@
+
+if ($msg) {			//linkКонтакты
+	// выведем свой ID, список онлайн и возможность отправить
+	if ($msg==1) {	// основная страница
+   $stmp = "<a href=\"#add\">добавить</a>|<a href=\"http://wtd.pdwap.org/\">форум</a>";
+		// список онлайн
+		$count=0;
+ foreach (array_keys($player["msg"]) as $i) {
+			if (isset($game["players"][$i])) {
+				$count++;
+				$stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&msg=read&id=$i\">".$game["loc"][$game["players"][$i]][$i]["title"];
+				if ($player["msg"][$i]) $stmp.=" (+)";
+				$stmp.="</a>";
+				}
+			}
+		// карта добавить
+		$stmp1='';
+	if ($game["loc"][$player["loc"]]) foreach(array_keys($game["loc"][$player["loc"]]) as $i) if ($i!=$login && substr($i,0,5)=='user.') {
+
+		$stmp1.="<br/><a href=\"$PHP_SELF?sid=$sid&id=".$i."&msg=add\">";
+		$stmp1.=$game["loc"][$player["loc"]][$i]["title"];
+		$stmp1.="</a>";
+		}
+		if (!$stmp1) $stmp1="<br/>никого нет";
+		$stmp.="\n</p>\n</card>\n<card id=\"add\" title=\"Добавить\"><p>Кого добавить:".$stmp1;
+		}
+	if ($msg=='add') {		// добавить $id
+		if (!$id) msg("Вы должны указать того, кого хотите добавить в свои контакты");
+		$player["msg"][$id]="";
+		$stmp=$game["loc"][$player["loc"]][$id]["title"]." добавлен\n<br/><a href=\"$PHP_SELF?sid=$sid&msg=1\">Контакты</a>";
+		}
+	if ($msg=='del') {		// добавить $id
+		if (!$id) msg("Вы должны указать того, кого хотите удалить из своих контактов");
+		unset($player["msg"][$id]);
+		$stmp=$game["loc"][$player["loc"]][$id]["title"]." удален\n<br/><a href=\"$PHP_SELF?sid=$sid&msg=1\">Контакты</a>";
+		}
+	if ($msg=='read') {		// добавить $id
+		if (!$id) msg("Вы должны указать того, чьи сообщения хотите прочитать");
+		$stmp=$game["loc"][$game["players"][$id]][$id]["title"]."<br/><a href=\"$PHP_SELF?sid=$sid&msg=del&id=$id\">[Удалить]</a>";
+		if (!$player["msg"][$id]) $stmp.="\n<br/>Сообщений нет";
+			else $stmp.="\n<br/>".substr($player["msg"][$id],strlen($player["msg"][$id])-700);
+		$stmp.="\n<br/><a href=\"#write\">[Написать]</a>";
+		$player["msg"][$id]="";	// удаляем прочитанные сообщения
+		// карта написать
+		$stmp.="\n</p>\n</card>\n<card id=\"write\" title=\"Написать\">\n<p>\n<input name=\"text\" maxlength=\"160\"/>\n<br/>";
+		//<a href=\"$PHP_SELF?sid=$sid&msg=write&id=$id&text=$(text)\">ok</a>";
+		$stmp.="<anchor>[ok]<go method=\"post\" href=\"$PHP_SELF?sid=$sid&msg=write&id=$id\"><postfield name=\"text\" value=\"$(text)\"/></go></anchor>";
+		}
+	if ($msg=='write') {		// добавить $id
+		if (!$id) msg("Вы должны указать того, кому пишете собщение");
+		if ( !$HTTP_POST_VARS["text"] ) msg("Нет текста для отправки");
+		$text = $HTTP_POST_VARS["text"];
+		$text=substr($text,0,160);
+		$text=strip_tags($text);
+		$text=tsdecode(urlencode($text));
+		$text=str_replace("+"," ",$text);
+		$text=str_replace("&","",$text);
+		$text=str_replace("#","",$text);
+		$text=str_replace('$','',$text);
+//eval(implode('',file("f_loadoffline.dat")));
+		if (!isset($game["players"][$id])) msg("Нет такого пользователя");
+		if (isset($game["players"][$id])) {
+
+$md1=getdate(time());
+$md1=$md1["yday"];
+$fnum23=fopen("prot/msg/p$md1.dat","a+t");
+$stroka23=">".$login." to ".$id.": ".$text."\n";
+$stroka23=str_replace("user.","",$stroka23);
+fputs($fnum23,$stroka23);
+fclose($fnum23);
+			if (!isset($game["loc"][$game["players"][$id]][$id]["msg"][$login])) msg("Вы не добавлены в контакты у ".$game["loc"][$player["loc"]][$id]["title"]);
+			if ($game["loc"][$game["players"][$id]][$id]["msg"][$login]) $game["loc"][$game["players"][$id]][$id]["msg"][$login].="<br/>";
+			$game["loc"][$game["players"][$id]][$id]["msg"][$login].="[".date("d.m H:i")."] ".strip_tags($text);
+			} else {
+				if (!isset($game["loc"]["loc.offline"][$id]["msg"][$login])) msg("Вы не добавлены в контакты у ".$game["loc"][$player["loc"]][$id]["title"]);
+				if ($game["loc"]["loc.offline"][$id]["msg"][$login]) $game["loc"]["loc.offline"][$id]["msg"][$login].="<br/>";
+				$game["loc"]["loc.offline"][$id]["msg"][$login].="[".date("d.m H:i")."] ".strip_tags($text);
+				}
+		$stmp="Сообщение для ".$game["loc"][$player["loc"]][$id]["title"]." отправлено\n<br/><a href=\"$PHP_SELF?sid=$sid&msg=1\">Контакты</a>";
+		}
+
+	msg($stmp,"Контакты");
+	}
+

@@ -1,0 +1,10 @@
+$mon=explode("|", $player['items']['item.misc.money']);
+if ($mon[1]<=$dialog[2] && !$b) {
+          msg("У вас мало денег, надо ".$dialog[2]." монет");
+        $b='';
+        }
+else  {$b=1;
+unset($player['gild']);
+ 
+      msg("Вы покинули гильдию.");
+      }

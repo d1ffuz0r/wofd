@@ -1,0 +1,5 @@
+$dop='';
+if (substr($player["loc"],4,1)=="L") $dop="1";
+$id=substr($player["loc"],6);
+$stmp12="<p align=\"center\"><img alt=\"Map\" src=\"maps/pic$dop.php?ind=$id\"/>";
+msg($stmp12,"Карта");

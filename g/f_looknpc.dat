@@ -1,0 +1,16 @@
+
+		if (!isset($game["loc"][$player["loc"]][$look])) msg("<p>Ќе на кого смотреть");
+		$npc=$game["loc"][$player["loc"]][$look];	// дл€ оптимизации
+		$stmp.="<p>".$npc["title"];
+    if (substr($look,0,11)=='npc.animal.') $stmp.="<br/>животное";
+		if (substr($look,0,9)=='npc.crim.') $stmp.="<br/>монстр";
+		if (substr($look,0,10)=='npc.guard.') $stmp.="<br/>городска€ стража";
+		if (substr($look,0,11)=='npc.summon.') $stmp.="<br/>призванное с помощью магии";
+    $stmp.="<br/>кол-во жизни: ".$npc["life"];
+    if ($npc["bankir"])  $stmp.="<br/>банкир";
+		if ($npc["trader"])  $stmp.="<br/>торговец";
+		if ($npc["healer"])  $stmp.="<br/>лекарь";
+		if ($npc["speak"])  $stmp.="<br/>может с вами говорить";
+		if ($npc["tame"])  $stmp.="<br/>cложность приручени€: ".$npc["tame"];
+    if ($npc["owner"]) if (isset($game["loc"][$player["loc"]][$npc["owner"]])) $stmp.="<br/>принадлежит ".$game["loc"][$player["loc"]][$npc["owner"]]["title"];
+			else  $stmp.="<br/>принадлежит неизвестно кому";

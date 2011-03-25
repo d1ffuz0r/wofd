@@ -1,0 +1,6 @@
+// загружаем список оффлайн игроков (при сохранении игры он будет автоматически сохранен
+
+		if (file_exists("loc_offline.dat")) {
+			$loc_offline = implode("",file("loc_offline.dat"));
+			$game["loc"]["loc.offline"] = unserialize($loc_offline);
+			} else $game["loc"]["loc.offline"] = array();

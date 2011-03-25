@@ -1,0 +1,4 @@
+if ($serv){
+$stmp.="<a href=\"$PHP_SELF?site=online\">*сейчас в игре</a><br/><a href=\"$PHP_SELF?site=rule\">*о игре</a><br/><a href=\"c.g\">*написать админу</a><br/><a href=\"http://wtd.pdwap.org\">*форум</a><br/><a href=\"b.g\">*книга игры</a><br/>";
+	msg($stmp,"Сервис");
+}

@@ -1,0 +1,25 @@
+// список всех скиллов
+eval(implode('',file("skills.dat")));
+
+	// в $to цель, если есть
+	$skills=split("\|",$player["skills"]);
+	$war=split("\|",$player["war"]);
+	if ($macro==1) $m="&macros=list&num=$num&name=$name&act=$act#add"; else $m='';
+	$stmp="<p>";
+	$ind=0; $count=0; if(!$start) $start=0;
+	if (!$macro) $stmp="<a href=\"$PHP_SELF?sid=$sid&look=skill.str\">Сила</a>: ".$skills[0]."<br/><a href=\"$PHP_SELF?sid=$sid&look=skill.dex\">Ловкость</a>: ".$skills[1]."<br/><a href=\"$PHP_SELF?sid=$sid&look=skill.int\">Интеллект</a>: ".$skills[2]."<br/><b>Опыт:</b> ".$skills[3]."/".$war[13]*$points_levelup."<br/><b>Очки опыта:</b> ".$skills[4];
+	foreach(array_keys($arr_title) as $i) if ($i!='str' && $i!='dex' && $i!='int') {
+		if ($ind>=$start && $ind<$start+$count_show) {	//FIX: может +1?
+		if ($to) {
+			if ($i=="meditation" || $i=="animaltaming" || $i=="steal" || $i=="ingen") 
+			$stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&to=$to&use=skill.".$i.$m."\">".$arr_title[$i]."</a>";
+			} else {	// в след. экране all выберем цель $to для использования
+				$stmp.="\n<br/><a href=\"$PHP_SELF?sid=$sid&look=skill.".$i."\">".$arr_title[$i]."</a>: ".$skills[$arr_skills[$i]];
+				if ($i=="meditation" || $i=="animaltaming" || $i=="steal" || $i=="ingen" || $i=="repair" || $i=="alhemy") $stmp.=" <a href=\"$PHP_SELF?sid=$sid&use=skill.".$i."\">[+]</a>";
+				}
+		}
+		$ind++;
+		}
+	if ($start) {$stmp.= "\n<br/><a href=\"$PHP_SELF?sid=$sid&list=skill\">^ </a>";}
+	if ($start+$count_show<count($arr_title)-3) {if (!$start) $stmp.="\n<br/>"; $stmp.= "<a href=\"$PHP_SELF?sid=$sid&list=skill&start=".($start+$count_show)."\">+ (".(count($arr_title)-3-$start-$count_show).")</a>";}
+	msg($stmp,"Навыки",1);

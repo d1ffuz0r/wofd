@@ -1,0 +1,17 @@
+//сохранение
+
+if (isset($player["info"]))
+{
+$s=serialize($player);
+$s=preg_replace('/s:(?:\d+):"(.*?)";/e',"calcser('\\1')",$s);
+if ($s=='') msg("Ошибка сохранения","er");
+if (strlen($s)==0) msg("Ошибка сохранения","er");
+
+$filesave = fopen ("save/".$login.".dat", "w");
+fputs($filesave,$s);
+fclose ($filesave);              
+
+msg("Ваш аккаунт сохранен. Персонаж исчезнет через 3 минуты если вы выйдете из игры.<br/><a href=\"$PHP_SELF?sid=$sid\">[в игру]</a>/<a href=\"$PHP_SELF\">[на главную]</a>","ok");
+}
+
+else msg("Ошибка сохранения","er");

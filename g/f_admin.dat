@@ -1,0 +1,27 @@
+
+// сылка воскрешение для админа
+if ($login==$admin) {
+	if ($adm=='1') {msg("<input name=\"inp\"/><br/><a href=\"$PHP_SELF?sid=$sid&adm=god\">Бог (".$player["god"].")</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=tele&inp=$(inp)\">Телепортация (без loc.)</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=money&inp=$(inp)\">Монеты</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=get&inp=$(inp)\">Get</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=say&inp=$(inp)\">Сказать</a><br/><input name=\"val\"/><br/><a href=\"$PHP_SELF?sid=$sid&adm=set&inp=$(inp)&val=$(val)\">Set</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=add&inp=$(inp)&val=$(val)\">Add</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=upgrade\">Обновить мир</a><br/><a href=\"$PHP_SELF?sid=$sid&adm=system\">System</a>");}
+	if ($adm=='res') {$game["loc"][$game["players"][$login]][$login]["life"]=$game["loc"][$game["players"][$login]][$login]["life_max"];$game["loc"][$game["players"][$login]][$login]['mana']=$game["loc"][$game["players"][$login]][$login]['mana_max'];$game["loc"][$game["players"][$login]][$login]['ghost']=0;$game["loc"][$game["players"][$login]][$login]['crim']=0;}
+	if ($adm=='tele') {
+    $loc='loc.'.strtolower($inp);
+		if (!isset($locations[$loc])) msg("<p>Нет локации ".$loc);
+		$game["loc"][$loc][$login]=$game["loc"][$player["loc"]][$login];
+		unset($game["loc"][$player["loc"]][$login]);
+		unset($player);
+		$player=&$game["loc"][$loc][$login];
+		$player["loc"]=$loc;
+		$game["players"][$login]=$loc;
+    }
+	if ($adm=='money' && $inp) $game["loc"][$game["players"][$login]][$login]["items"]["item.misc.money"]="монеты|".$inp."|1"; 
+	if ($adm=='get') {$skills=split("\|",$player["skills"]); msg($skills[strtolower($inp)]);}
+	if ($adm=='set') {$skills=split("\|",$player["skills"]); $skills[strtolower($inp)]=$val;$player["skills"]=implode("|",$skills);calcparam($login);}
+	if ($adm=='add' && $inp && $val) {$game["loc"][$player["loc"]][strtolower($inp)]=$val; if (!isset($game["loc_add"][$player["loc"]][$inp])); $game["loc_del"][$player["loc"]][$inp]=time()+$time_objects_destroy;}
+	if ($adm=='god') {if ($player["god"]) unset($player["god"]); else $player["god"]=1;}
+	if ($adm=='say') {$say=$inp;}
+	if ($adm=='upgrade') {eval(implode('',file("f_upgrade.dat")));}
+	if ($adm=='system')
+  foreach(array_keys($game["players"]) as $j) { 	// раз в 20 сек
+		if ($game["loc"][$game["players"][$j]][$j]["title"]=="") $game["loc"][$game["players"][$j]][$j]["title"]="Noname";
+		}
+	}

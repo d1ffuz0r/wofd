@@ -1,0 +1,8 @@
+		//if ($to) $to.=", ";
+		$page_main.= "<anchor>$to<refresh><setvar name=\"to\" value=\"$to\"/></refresh></anchor>";
+		$page_main.="\n<br/><input name=\"to\" value=\"$to\"/>";
+		$page_main.="\n<br/><input name=\"say\" maxlength=\"160\" value=\"\"/>\n<br/>
+                   <select name=\"t\" multiple=\"true\" value=\"1\"><option value=\"1\">[транслит]</option></select>\n<br/>";
+		$page_main.="<anchor>[сказать]<go method=\"post\" href=\"$PHP_SELF?sid=$sid&t=$(t)&l=$(l)&to=$(to)\"><postfield name=\"say\" value=\"$(say)\"/></go></anchor>";
+		// карта общее
+		msg($page_main);

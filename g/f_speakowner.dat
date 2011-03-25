@@ -1,0 +1,90 @@
+// диалог со своим животным
+
+			$stmp = "<p>";
+			if (!$id) {			// основной диалог
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=battle\">Насчет боя...</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=move\">Насчет движения...</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=lask\">Приласкать</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=info\">Состояние</a>";
+				}
+			if ($id=='battle') {	// режим боя
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=guardme\">Защищай меня</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=nelez\">Не лезь в драку</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=attacklist\">Атакуй...</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=guardlist\">Защищай...</a>";
+				}
+			if ($id=='guardme') {	// охранять меня
+				$game["loc"][$player["loc"]][$speak]["guard"]=$login;
+				$stmp.="<br/>Теперь будет защищать вас";
+				}
+			if ($id=='nelez') {	// не вмешиваться в бой
+				unset($game["loc"][$player["loc"]][$speak]["guard"]);
+				$stmp.="<br/>Не будет вмешиваться в бой";
+				}
+			if ($id=='guardlist') {	// список кого защищать
+				$stmp="<p>Выберите кого защищать:";
+				if ($game["loc"][$player["loc"]]) foreach (array_keys($game["loc"][$player["loc"]]) as $i) if ($i!=$login) if (substr($i,0,4)=='npc.' || substr($i,0,5)=='user.') {
+					$tto = $game["loc"][$player["loc"]][$i]["title"];
+					$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=guard&who=".$i."&tto=".$tto."\">".$tto."</a>";
+					}
+				}
+			if ($id=='guard' && $who && $tto) { // защищать $who
+				$game["loc"][$player["loc"]][$speak]["guard"]=$who;
+				$stmp.="<br/>С этого момента будет защищать ".$tto;
+				}
+			if ($id=='attacklist') {	// список кого атаковать
+				$stmp="<p>Выберите кого атаковать:";
+				if ($game["loc"][$player["loc"]]) foreach (array_keys($game["loc"][$player["loc"]]) as $i) if ($i!=$login) if (substr($i,0,4)=='npc.' || substr($i,0,5)=='user.') {
+					$tto = $game["loc"][$player["loc"]][$i]["title"];
+					$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=attack&who=".$i."&tto=".$tto."\">".$tto."</a>";
+					}
+				}
+			if ($id=='attack' && $who && $tto) { // защищать $who
+				$game["loc"][$player["loc"]][$speak]["attack"]=$who;
+				$stmp.="<br/>Атакует ".$tto."!";
+				}
+			if ($id=='move') {	// режим движения
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=followme\">Следуй за мной</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=stay\">Стой здесь</a>";
+				$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=followlist\">Следуй за...</a>";
+				}
+			if ($id=='followme') {	// следуй за мной
+				$game["loc"][$player["loc"]][$speak]["follow"]=$login;
+				$stmp.="<br/>Теперь будет следовать за вами";
+				}
+			if ($id=='stay') {	// стой здесь
+				unset($game["loc"][$player["loc"]][$speak]["follow"]);
+				$stmp.="<br/>Будет стоять здесь, пока не позовете";
+				}
+			if ($id=='followlist') {	// список за кем следовать
+				$stmp="<p>Выберите за кем следовать:";
+				if ($game["loc"][$player["loc"]]) foreach (array_keys($game["loc"][$player["loc"]]) as $i) if ($i!=$login) if (substr($i,0,4)=='npc.' || substr($i,0,5)=='user.') {
+					$tto = $game["loc"][$player["loc"]][$i]["title"];
+					$stmp.="<br/><a href=\"$PHP_SELF?sid=$sid&speak=$speak&id=follow&who=".$i."&tto=".$tto."\">".$tto."</a>";
+					}
+				}
+			if ($id=='follow' && $who && $tto) { // следовать за $who
+				$game["loc"][$player["loc"]][$speak]["follow"]=$who;
+				$stmp.="<br/>С этого момента будет следовать за ".$tto;
+				}
+			if ($id=='lask') {	// приласкать
+				$skills=split("\|",$player["skills"]);
+				if (rand(0,100)<$skills[7]*10) {
+					if ($game["loc"][$player["loc"]][$speak]["time_owner"]) {
+						$game["loc"][$player["loc"]][$speak]["time_owner"]+=rand(60,60+$skills[20]*60);
+						$stmp.="<br/>Кажется, вы стали ему нравиться немного больше";
+						}else $stmp.="<br/>Он будет вам предан всегда, нет нужды в поощрении";
+					}else $stmp.="<br/>Ваша попытка не призвела на него впечатления";
+				}
+			if ($id=='info') {	// инфо когда покинет
+				if (!$game["loc"][$player["loc"]][$speak]["time_owner"]) $stmp.="<br/>Никогда вас не покинет";
+				else {
+					$skills=split("\|",$player["skills"]);
+					$timeleft = ($game["loc"][$player["loc"]][$speak]["time_owner"]-time())/60;
+					// srand();
+					$pogr = rand(0,10*(10-$skills[20]*2));
+					$pogr = $pogr*$timeleft/100;
+					$stmp.="<br/>Покинет вас через ".round($timeleft-$pogr)." - ".round($timeleft+$pogr)." минут";
+					}
+				}
+		msg($stmp,$title);

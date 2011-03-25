@@ -1,0 +1,6 @@
+	global $game;
+	if (!isset($game["players"][$to]) || !$game["loc"][$game["players"][$to]][$to]["ghost"]) {addjournal($to,"Вы не призрак"); return;}
+	$game["loc"][$game["players"][$to]][$to]["ghost"]=0;
+	$game["loc"][$game["players"][$to]][$to]["time_regenerate"]=time();
+	addjournalall($game["players"][$to],$game["loc"][$game["players"][$to]][$to]["title"]." воскрес!",$to);
+	addjournal($to,"Вы воскресли!");

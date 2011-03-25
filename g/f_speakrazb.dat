@@ -1,0 +1,8 @@
+if ($player["lag"]=="0")
+{
+$player["lag"]="2";
+$player["items"]["item.weapon.knife.zat"] = "заточка|1|0|1|3|0|4|заточкой||";
+$player["items"]["item.armor.body.trap"] = "плащ|1|0|1";
+msg("¬ы стали разбойником и получили плащ и заточку");
+}
+else msg("¬ы уже состоите в лагере");

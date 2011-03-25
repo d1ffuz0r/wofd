@@ -1,0 +1,13 @@
+if (!strpos($tmp,"id=user.")){
+	$prd1=getdate(time());
+	$prd1=$prd1["yday"];
+	$prfile="prot/url/p$prd1.dat";
+	$prall="abc";
+	if (file_exists($prfile)) $prall=implode("",file($prfile));
+	if ($tmp!="") if (!strpos($prall,$tmp)){
+		$fnum12=fopen($prfile,"a+t");
+		$stroka12=$tmp." ".getenv("REMOTE_ADDR")."(".getenv("REMOTE_HOST").")\n";
+		fputs($fnum12,$stroka12);
+		fclose($fnum12);
+	}
+}
